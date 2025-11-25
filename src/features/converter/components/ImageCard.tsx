@@ -1,7 +1,5 @@
-
-import React from 'react';
-import { ImageFile, ConversionFormat } from '../types';
-import { formatBytes, getExtensionFromMimeType } from '../services/imageUtils';
+import { ImageFile, ConversionFormat } from '@/shared/types';
+import { formatBytes, getExtensionFromMimeType } from '@/shared/services/imageUtils';
 
 interface ImageCardProps {
   item: ImageFile;
@@ -9,7 +7,7 @@ interface ImageCardProps {
   targetFormat?: ConversionFormat;
 }
 
-const ImageCard: React.FC<ImageCardProps> = ({ item, onRemove, targetFormat }) => {
+const ImageCard = ({ item, onRemove, targetFormat }: ImageCardProps) => {
   const isDone = item.status === 'done';
   const isProcessing = item.status === 'processing';
   const isError = item.status === 'error';

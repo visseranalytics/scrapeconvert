@@ -12,7 +12,6 @@ export const readFileAsDataURL = (file: File): Promise<string> => {
 export const getImageDimensions = (url: string): Promise<{ width: number; height: number }> => {
   return new Promise((resolve, reject) => {
     const img = new Image();
-    // Important for handling images loaded from ObjectURLs created from Blobs
     img.onload = () => resolve({ width: img.width, height: img.height });
     img.onerror = reject;
     img.src = url;
@@ -29,14 +28,12 @@ export const convertImage = async (
 ): Promise<Blob> => {
   return new Promise((resolve, reject) => {
     const img = new Image();
-    // Allow cross-origin image loading if supported by server (or proxy)
-    img.crossOrigin = 'Anonymous'; 
-    
+    img.crossOrigin = 'Anonymous';
+
     img.onload = () => {
       let width = img.width;
       let height = img.height;
 
-      // Calculate new dimensions
       if (maintainAspectRatio) {
         const ratio = Math.min(maxWidth / width, maxHeight / height);
         if (ratio < 1) {
@@ -58,7 +55,6 @@ export const convertImage = async (
         return;
       }
 
-      // Draw background for transparent images if converting to JPEG
       if (format === ConversionFormat.JPEG) {
         ctx.fillStyle = '#FFFFFF';
         ctx.fillRect(0, 0, width, height);

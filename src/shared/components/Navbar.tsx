@@ -1,15 +1,12 @@
-import React from 'react';
+import { NavLink, Link, useLocation } from 'react-router-dom';
 
-interface NavbarProps {
-  activePage: string;
-  onNavigate: (page: 'home' | 'converter' | 'scraper') => void;
-}
+const Navbar = () => {
+  const location = useLocation();
 
-const Navbar: React.FC<NavbarProps> = ({ activePage, onNavigate }) => {
-  const navItemClass = (page: string) => `
-    cursor-pointer px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200
-    ${activePage === page 
-      ? 'text-white bg-white/10 shadow-sm' 
+  const navLinkClass = ({ isActive }: { isActive: boolean }) => `
+    px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200
+    ${isActive
+      ? 'text-white bg-white/10 shadow-sm'
       : 'text-slate-400 hover:text-white hover:bg-white/5'
     }
   `;
@@ -19,10 +16,7 @@ const Navbar: React.FC<NavbarProps> = ({ activePage, onNavigate }) => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <div 
-            className="flex items-center gap-3 cursor-pointer group"
-            onClick={() => onNavigate('home')}
-          >
+          <Link to="/" className="flex items-center gap-3 group">
             <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-primary to-primaryDark flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-primary/30 group-hover:shadow-primary/50 transition-all">
               M
             </div>
@@ -30,31 +24,27 @@ const Navbar: React.FC<NavbarProps> = ({ activePage, onNavigate }) => {
               <span className="text-xl font-bold tracking-tight text-white leading-none">Morphix</span>
               <span className="text-[10px] font-medium text-slate-500 uppercase tracking-widest leading-none mt-1">Studio</span>
             </div>
-          </div>
+          </Link>
 
           {/* Desktop Nav */}
           <div className="hidden md:flex items-center gap-2">
-            <button 
-              onClick={() => onNavigate('home')}
-              className={navItemClass('home')}
-            >
+            <NavLink to="/" className={navLinkClass} end>
               Overview
-            </button>
-            <button 
-              onClick={() => onNavigate('converter')}
-              className={navItemClass('converter')}
-            >
+            </NavLink>
+            <NavLink to="/converter" className={navLinkClass}>
               Converter
-            </button>
-            <button 
-              onClick={() => onNavigate('scraper')}
-              className={navItemClass('scraper')}
+            </NavLink>
+            <NavLink
+              to="/scraper"
+              className={({ isActive }) => navLinkClass({
+                isActive: isActive || location.pathname.startsWith('/scraper')
+              })}
             >
               Web Scraper
-            </button>
+            </NavLink>
           </div>
 
-          {/* Mobile Action (Placeholder) */}
+          {/* Mobile Menu Button */}
           <div className="md:hidden">
             <button className="text-slate-400 hover:text-white">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">

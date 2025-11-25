@@ -1,10 +1,8 @@
-import React from 'react';
-
 interface HeroProps {
   onNavigate: (page: 'converter' | 'scraper') => void;
 }
 
-const Hero: React.FC<HeroProps> = ({ onNavigate }) => {
+const Hero = ({ onNavigate }: HeroProps) => {
   return (
     <div className="relative overflow-hidden pt-32 pb-20 lg:pt-48 lg:pb-32">
       {/* Background decoration */}
@@ -18,18 +16,18 @@ const Hero: React.FC<HeroProps> = ({ onNavigate }) => {
           <span className="flex h-2 w-2 rounded-full bg-green-400 animate-pulse"></span>
           <span className="text-xs font-medium text-slate-300">v2.0 Now Available</span>
         </div>
-        
+
         <h1 className="text-5xl md:text-7xl font-extrabold text-transparent bg-clip-text bg-gradient-to-b from-white to-slate-400 mb-6 tracking-tight">
           Master Your Media <br className="hidden md:block" />
           <span className="text-white">Without the Server.</span>
         </h1>
-        
+
         <p className="max-w-2xl mx-auto text-lg text-slate-400 mb-10 leading-relaxed">
           We are tired of having to manually download the images from a website one at a time, then convert them, etc. Morphix handles the tedious work securely in your browser.
         </p>
 
         <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-          <button 
+          <button
             onClick={() => onNavigate('converter')}
             className="w-full sm:w-auto px-8 py-4 bg-primary hover:bg-primaryDark text-white font-bold rounded-xl shadow-xl shadow-primary/20 transition-all transform hover:-translate-y-1 active:translate-y-0 flex items-center justify-center gap-2"
           >
@@ -38,10 +36,10 @@ const Hero: React.FC<HeroProps> = ({ onNavigate }) => {
             </svg>
             Launch Converter
           </button>
-          
-          <button 
-             onClick={() => onNavigate('scraper')}
-             className="w-full sm:w-auto px-8 py-4 bg-surface hover:bg-slate-700 border border-slate-700 text-white font-bold rounded-xl shadow-lg transition-all flex items-center justify-center gap-2"
+
+          <button
+            onClick={() => onNavigate('scraper')}
+            className="w-full sm:w-auto px-8 py-4 bg-surface hover:bg-slate-700 border border-slate-700 text-white font-bold rounded-xl shadow-lg transition-all flex items-center justify-center gap-2"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-secondary" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />

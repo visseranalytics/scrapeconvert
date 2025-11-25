@@ -1,6 +1,5 @@
-
 import { v4 as uuidv4 } from 'uuid';
-import { ScrapedImage } from '../types';
+import { ScrapedImage } from '@/shared/types';
 
 // List of proxies to try in sequence.
 const PROXIES = [

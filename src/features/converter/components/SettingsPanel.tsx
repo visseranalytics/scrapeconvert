@@ -1,5 +1,4 @@
-import React from 'react';
-import { ConversionFormat, ConversionSettings } from '../types';
+import { ConversionFormat, ConversionSettings } from '@/shared/types';
 
 interface SettingsPanelProps {
   settings: ConversionSettings;
@@ -7,11 +6,11 @@ interface SettingsPanelProps {
   disabled: boolean;
 }
 
-const SettingsPanel: React.FC<SettingsPanelProps> = ({ 
-  settings, 
-  onSettingsChange, 
-  disabled 
-}) => {
+const SettingsPanel = ({
+  settings,
+  onSettingsChange,
+  disabled
+}: SettingsPanelProps) => {
   
   const handleChange = (key: keyof ConversionSettings, value: any) => {
     onSettingsChange({ ...settings, [key]: value });

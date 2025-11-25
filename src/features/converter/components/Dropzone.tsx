@@ -1,38 +1,38 @@
-import React, { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, DragEvent, ChangeEvent } from 'react';
 
 interface DropzoneProps {
   onFilesSelected: (files: File[]) => void;
+  compact?: boolean;
 }
 
-const Dropzone: React.FC<DropzoneProps> = ({ onFilesSelected }) => {
+const Dropzone = ({ onFilesSelected, compact = false }: DropzoneProps) => {
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleDragEnter = useCallback((e: React.DragEvent) => {
+  const handleDragEnter = useCallback((e: DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
     setIsDragging(true);
   }, []);
 
-  const handleDragLeave = useCallback((e: React.DragEvent) => {
+  const handleDragLeave = useCallback((e: DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
     setIsDragging(false);
   }, []);
 
-  const handleDragOver = useCallback((e: React.DragEvent) => {
+  const handleDragOver = useCallback((e: DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
   }, []);
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
+  const handleDrop = useCallback((e: DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
     setIsDragging(false);
 
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      const droppedFiles = Array.from(e.dataTransfer.files);
-      // Filter for images
+      const droppedFiles = Array.from(e.dataTransfer.files) as File[];
       const imageFiles = droppedFiles.filter(file => file.type.startsWith('image/'));
       if (imageFiles.length > 0) {
         onFilesSelected(imageFiles);
@@ -40,9 +40,9 @@ const Dropzone: React.FC<DropzoneProps> = ({ onFilesSelected }) => {
     }
   }, [onFilesSelected]);
 
-  const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileInput = (e: ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
-      const selectedFiles = Array.from(e.target.files);
+      const selectedFiles = Array.from(e.target.files) as File[];
       const imageFiles = selectedFiles.filter(file => file.type.startsWith('image/'));
       onFilesSelected(imageFiles);
     }
@@ -51,6 +51,43 @@ const Dropzone: React.FC<DropzoneProps> = ({ onFilesSelected }) => {
   const handleButtonClick = () => {
     fileInputRef.current?.click();
   };
+
+  if (compact) {
+    return (
+      <div
+        onDragEnter={handleDragEnter}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+        onClick={handleButtonClick}
+        className={`
+          relative w-full py-3 px-4 border border-dashed rounded-lg cursor-pointer transition-all duration-200 ease-in-out group
+          ${isDragging
+            ? 'border-primary bg-primary/10'
+            : 'border-slate-600 hover:border-primary hover:bg-surface/50'
+          }
+        `}
+      >
+        <input
+          type="file"
+          ref={fileInputRef}
+          onChange={handleFileInput}
+          multiple
+          accept="image/*"
+          className="hidden"
+        />
+
+        <div className="flex items-center justify-center gap-3">
+          <svg xmlns="http://www.w3.org/2000/svg" className={`w-5 h-5 ${isDragging ? 'text-primary' : 'text-slate-400 group-hover:text-primary'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+          </svg>
+          <span className={`text-sm font-medium ${isDragging ? 'text-primary' : 'text-slate-400 group-hover:text-slate-200'}`}>
+            {isDragging ? 'Drop to add more' : 'Add more images'}
+          </span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -61,8 +98,8 @@ const Dropzone: React.FC<DropzoneProps> = ({ onFilesSelected }) => {
       onClick={handleButtonClick}
       className={`
         relative w-full p-10 border-2 border-dashed rounded-xl cursor-pointer transition-all duration-300 ease-in-out group
-        ${isDragging 
-          ? 'border-primary bg-primary/10 scale-[1.01]' 
+        ${isDragging
+          ? 'border-primary bg-primary/10 scale-[1.01]'
           : 'border-slate-600 hover:border-primary hover:bg-surface'
         }
       `}
@@ -75,7 +112,7 @@ const Dropzone: React.FC<DropzoneProps> = ({ onFilesSelected }) => {
         accept="image/*"
         className="hidden"
       />
-      
+
       <div className="flex flex-col items-center justify-center space-y-4 text-center">
         <div className={`
           p-4 rounded-full bg-surface shadow-lg transition-transform duration-300
