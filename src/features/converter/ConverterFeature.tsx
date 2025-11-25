@@ -279,7 +279,7 @@ const ConverterFeature = ({ files, setFiles }: ConverterFeatureProps) => {
 
             {/* Compact "Add more" dropzone */}
             <div className="mt-4 pt-4 border-t border-slate-700/50">
-              <Dropzone onFilesSelected={handleFilesSelected} />
+              <Dropzone onFilesSelected={handleFilesSelected} compact />
             </div>
           </div>
         </div>

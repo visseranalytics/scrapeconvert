@@ -3,7 +3,6 @@ import Hero from './components/Hero';
 import WhyWeBuiltThis from './components/WhyWeBuiltThis';
 import Pricing from './components/Pricing';
 import FAQ from './components/FAQ';
-import Support from './components/Support';
 
 const HomePage = () => {
   const navigate = useNavigate();
@@ -18,7 +17,6 @@ const HomePage = () => {
       <WhyWeBuiltThis />
       <Pricing />
       <FAQ />
-      <Support />
     </>
   );
 };
