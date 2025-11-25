@@ -25,7 +25,7 @@ const Hero: React.FC<HeroProps> = ({ onNavigate }) => {
         </h1>
         
         <p className="max-w-2xl mx-auto text-lg text-slate-400 mb-10 leading-relaxed">
-          The all-in-one suite for modern creatives. Bulk convert images, scrape assets from the web, and optimize files locally. No uploads, no waiting, 100% private.
+          We are tired of having to manually download the images from a website one at a time, then convert them, etc. Morphix handles the tedious work securely in your browser.
         </p>
 
         <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">

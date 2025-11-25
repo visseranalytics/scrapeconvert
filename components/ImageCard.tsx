@@ -1,16 +1,30 @@
+
 import React from 'react';
-import { ImageFile } from '../types';
+import { ImageFile, ConversionFormat } from '../types';
 import { formatBytes, getExtensionFromMimeType } from '../services/imageUtils';
 
 interface ImageCardProps {
   item: ImageFile;
   onRemove: (id: string) => void;
+  targetFormat?: ConversionFormat;
 }
 
-const ImageCard: React.FC<ImageCardProps> = ({ item, onRemove }) => {
+const ImageCard: React.FC<ImageCardProps> = ({ item, onRemove, targetFormat }) => {
   const isDone = item.status === 'done';
   const isProcessing = item.status === 'processing';
   const isError = item.status === 'error';
+
+  // Determine extensions for the badge
+  const sourceExt = getExtensionFromMimeType(item.file.type || 'image/jpeg').toUpperCase();
+  
+  // Target extension: 
+  // If done, use the actual output format.
+  // If not done, use the global target format passed in props.
+  const destExt = isDone && item.outputFormat
+    ? getExtensionFromMimeType(item.outputFormat).toUpperCase()
+    : targetFormat
+      ? getExtensionFromMimeType(targetFormat).toUpperCase()
+      : '...';
 
   return (
     <div className={`
@@ -18,46 +32,98 @@ const ImageCard: React.FC<ImageCardProps> = ({ item, onRemove }) => {
       ${isDone ? 'bg-surface border-green-500/30 hover:border-green-500/50' : 'bg-surface border-slate-700 hover:border-slate-600'}
       ${isError ? 'border-red-500/50' : ''}
     `}>
-      <div className="flex flex-col sm:flex-row h-auto sm:h-28">
+      <div className="flex flex-col sm:flex-row h-auto sm:h-32">
         
         {/* Preview Thumbnail */}
-        <div className="w-full sm:w-28 h-32 sm:h-full bg-black/40 flex-shrink-0 relative group border-b sm:border-b-0 sm:border-r border-slate-700/50">
+        <div className="w-full sm:w-32 h-32 sm:h-full bg-black/40 flex-shrink-0 relative group border-b sm:border-b-0 sm:border-r border-slate-700/50">
           <img 
             src={item.previewUrl} 
-            alt="Original" 
+            alt="Preview" 
             className="w-full h-full object-cover opacity-90 transition-opacity" 
           />
-          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-2">
-            <span className="text-[10px] text-white/90 font-mono uppercase">Original</span>
-          </div>
         </div>
 
         {/* Content */}
-        <div className="flex-1 p-4 flex flex-col justify-between">
+        <div className="flex-1 p-4 flex flex-col justify-between overflow-hidden">
           <div className="flex justify-between items-start gap-4">
-            <div className="min-w-0">
+            <div className="min-w-0 flex-1">
               <h3 className="text-sm font-semibold text-white truncate" title={item.file.name}>
                 {item.file.name}
               </h3>
-              <div className="flex items-center gap-2 mt-1 text-xs text-slate-400">
-                <span className="font-mono">{item.originalWidth}×{item.originalHeight}</span>
-                <span>•</span>
-                <span>{formatBytes(item.file.size)}</span>
+              
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-2 text-xs text-slate-400">
+                {/* Format Badge */}
+                <div className="flex items-center gap-1.5 bg-slate-800/80 px-1.5 py-0.5 rounded border border-slate-700/50 whitespace-nowrap">
+                    <span className="font-bold text-slate-300">{sourceExt}</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 text-slate-500" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M12.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-2.293-2.293a1 1 0 010-1.414z" clipRule="evenodd" />
+                    </svg>
+                    <span className={`font-bold ${isDone ? 'text-green-400' : 'text-primary'}`}>
+                        {destExt}
+                    </span>
+                </div>
+
+                <span className="hidden sm:inline">•</span>
+                <span className="font-mono whitespace-nowrap">{item.originalWidth}×{item.originalHeight}</span>
+                <span className="hidden sm:inline">•</span>
+                
+                {/* Size Logic */}
+                {isDone && item.resultSize ? (
+                  <div className="flex items-center gap-1.5 whitespace-nowrap">
+                    <span className="line-through decoration-slate-500 opacity-60">{formatBytes(item.file.size)}</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 text-slate-500" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                    </svg>
+                    <span className="text-green-400 font-bold">{formatBytes(item.resultSize)}</span>
+                  </div>
+                ) : (
+                  <span className="whitespace-nowrap">{formatBytes(item.file.size)}</span>
+                )}
               </div>
             </div>
             
-            <button 
-              onClick={() => onRemove(item.id)}
-              className="text-slate-500 hover:text-red-400 transition-colors p-1 rounded-md hover:bg-slate-700/50"
-              title="Remove from queue"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-              </svg>
-            </button>
+            <div className="flex items-center gap-1 flex-shrink-0">
+              {/* View Full Button (Newly Added) */}
+              <a 
+                href={item.previewUrl} 
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-slate-400 hover:text-white transition-colors p-1.5 rounded-md hover:bg-slate-700/50"
+                title="View Full Image"
+              >
+                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                 </svg>
+              </a>
+
+              {/* Download Action */}
+              {isDone && item.resultUrl && (
+                <a 
+                  href={item.resultUrl} 
+                  download={`morphix_${item.file.name.split('.')[0]}.${getExtensionFromMimeType(item.outputFormat || '')}`} 
+                  className="text-slate-400 hover:text-green-400 transition-colors p-1.5 rounded-md hover:bg-slate-700/50"
+                  title="Download"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
+                  </svg>
+                </a>
+              )}
+              
+              <button 
+                onClick={() => onRemove(item.id)}
+                className="text-slate-400 hover:text-red-400 transition-colors p-1.5 rounded-md hover:bg-slate-700/50"
+                title="Remove from queue"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                </svg>
+              </button>
+            </div>
           </div>
 
-          <div className="mt-3 flex items-center justify-between">
+          <div className="mt-2 flex items-center justify-between">
              {/* Status Indicators */}
              <div className="flex-1">
                {isProcessing && (
@@ -79,30 +145,7 @@ const ImageCard: React.FC<ImageCardProps> = ({ item, onRemove }) => {
                {item.status === 'idle' && (
                  <span className="text-xs text-slate-500 font-medium bg-slate-800 px-2 py-1 rounded">Ready to convert</span>
                )}
-
-               {isDone && item.resultSize && (
-                 <div className="flex items-center gap-2 text-green-400">
-                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                   </svg>
-                   <span className="text-xs font-bold">Done ({formatBytes(item.resultSize)})</span>
-                 </div>
-               )}
              </div>
-
-             {/* Download Action */}
-             {isDone && item.resultUrl && (
-               <a 
-                 href={item.resultUrl} 
-                 download={`morphix_${item.file.name.split('.')[0]}.${getExtensionFromMimeType(item.outputFormat || '')}`} 
-                 className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-500 text-white text-xs font-bold rounded-lg transition-all shadow-lg hover:shadow-green-500/20 transform hover:-translate-y-0.5"
-               >
-                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                   <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
-                 </svg>
-                 Download
-               </a>
-             )}
           </div>
         </div>
       </div>

@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import JSZip from 'jszip';
@@ -5,7 +6,7 @@ import Dropzone from './Dropzone';
 import SettingsPanel from './SettingsPanel';
 import ImageCard from './ImageCard';
 import { ImageFile, ConversionSettings, ConversionFormat } from '../types';
-import { readFileAsDataURL, getImageDimensions, convertImage, getExtensionFromMimeType } from '../services/imageUtils';
+import { readFileAsDataURL, getImageDimensions, convertImage, getExtensionFromMimeType, formatBytes } from '../services/imageUtils';
 
 interface ConverterFeatureProps {
   files: ImageFile[];
@@ -49,6 +50,20 @@ const ConverterFeature: React.FC<ConverterFeatureProps> = ({ files, setFiles }) 
       if (f.resultUrl) URL.revokeObjectURL(f.resultUrl);
     });
     setFiles([]);
+  };
+
+  // Reset status to allow re-converting with new settings
+  const handleRedo = () => {
+    setFiles(prev => prev.map(f => {
+      if (f.resultUrl) URL.revokeObjectURL(f.resultUrl);
+      return { 
+        ...f, 
+        status: 'idle', 
+        resultUrl: undefined, 
+        resultSize: undefined, 
+        errorMsg: undefined 
+      };
+    }));
   };
 
   const handleConvertAll = async () => {
@@ -152,12 +167,28 @@ const ConverterFeature: React.FC<ConverterFeatureProps> = ({ files, setFiles }) 
   const hasSuccessfulConversions = files.some(f => f.status === 'done');
   const showDownloadAll = isAllProcessed && hasSuccessfulConversions;
 
+  // Stats
+  const totalOriginalSize = files.reduce((acc, f) => acc + f.file.size, 0);
+  const totalConvertedSize = files.reduce((acc, f) => acc + (f.resultSize || 0), 0);
+  const savings = totalOriginalSize > 0 ? ((totalOriginalSize - totalConvertedSize) / totalOriginalSize * 100) : 0;
+
   return (
     <div className="w-full max-w-7xl mx-auto px-4 md:px-8 py-8 flex flex-col gap-6">
       
-      <div className="mb-6">
-        <h2 className="text-3xl font-bold text-white mb-2">Image Converter</h2>
-        <p className="text-slate-400">Optimize and format your images in bulk.</p>
+      {/* Hero Header */}
+      <div className="relative py-12 text-center overflow-hidden rounded-3xl bg-dark/30 border border-white/5 mb-4">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full max-w-3xl pointer-events-none opacity-50">
+          <div className="absolute top-10 left-0 w-40 h-40 bg-primary/20 rounded-full blur-[80px]"></div>
+          <div className="absolute bottom-10 right-0 w-40 h-40 bg-secondary/10 rounded-full blur-[80px]"></div>
+        </div>
+        <div className="relative z-10 px-4">
+            <h1 className="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-b from-white to-slate-400 mb-4 tracking-tight">
+                Studio Image Converter
+            </h1>
+            <p className="text-slate-400 max-w-xl mx-auto text-lg leading-relaxed">
+                Professional-grade client-side processing. Resize, compress, and format your assets securely without leaving your browser.
+            </p>
+        </div>
       </div>
 
       {/* Settings */}
@@ -179,10 +210,23 @@ const ConverterFeature: React.FC<ConverterFeatureProps> = ({ files, setFiles }) 
          {hasFiles ? (
             <div className="bg-dark/30 rounded-2xl border border-slate-700/30 p-4 md:p-6 min-h-[200px]">
               <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
-                 <h3 className="text-xl font-bold text-white flex items-center gap-2">
-                   Queue
-                   <span className="text-sm font-normal text-slate-500 bg-slate-800 px-2 py-0.5 rounded-full">{files.length}</span>
-                 </h3>
+                 
+                 <div className="flex flex-col gap-1">
+                   <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                     Queue
+                     <span className="text-sm font-normal text-slate-500 bg-slate-800 px-2 py-0.5 rounded-full">{files.length}</span>
+                   </h3>
+                   {hasSuccessfulConversions && (
+                      <div className="text-xs sm:text-sm text-slate-400 flex items-center gap-2 flex-wrap">
+                         <span>Input: <span className="text-slate-200 font-mono">{formatBytes(totalOriginalSize)}</span></span>
+                         <span>→</span>
+                         <span>Output: <span className="text-green-400 font-mono font-bold">{formatBytes(totalConvertedSize)}</span></span>
+                         <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${savings > 0 ? 'bg-green-500/20 text-green-400' : 'bg-slate-700 text-slate-400'}`}>
+                           {savings > 0 ? `SAVED ${savings.toFixed(0)}%` : 'NO SAVINGS'}
+                         </span>
+                      </div>
+                   )}
+                 </div>
                  
                  <div className="flex gap-3 w-full sm:w-auto">
                    <button
@@ -192,6 +236,19 @@ const ConverterFeature: React.FC<ConverterFeatureProps> = ({ files, setFiles }) 
                    >
                      Clear
                    </button>
+
+                   {/* Redo Button */}
+                   {isAllProcessed && (
+                      <button
+                        onClick={handleRedo}
+                        disabled={isProcessing || isZipping}
+                        className="flex-1 sm:flex-none px-4 py-2 text-sm font-medium text-primary hover:text-white transition-colors disabled:opacity-50 hover:bg-primary/10 rounded-lg border border-primary/30 hover:border-primary"
+                        title="Reset stats to try new settings"
+                      >
+                         Redo
+                      </button>
+                   )}
+
                    <button
                      onClick={showDownloadAll ? handleDownloadAll : handleConvertAll}
                      disabled={isProcessing || isZipping || (!hasFiles && !isAllProcessed)}
@@ -222,12 +279,13 @@ const ConverterFeature: React.FC<ConverterFeatureProps> = ({ files, setFiles }) 
                  </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {files.map((file) => (
                   <ImageCard 
                     key={file.id} 
                     item={file} 
-                    onRemove={handleRemoveFile} 
+                    onRemove={handleRemoveFile}
+                    targetFormat={settings.format}
                   />
                 ))}
               </div>

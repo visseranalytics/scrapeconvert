@@ -1,3 +1,4 @@
+
 export enum ConversionFormat {
   JPEG = 'image/jpeg',
   PNG = 'image/png',
@@ -22,8 +23,10 @@ export interface ScrapedImage {
   url: string;
   alt: string;
   name: string;
+  format: string;
   width?: number;
   height?: number;
+  size?: number; // File size in bytes
   selected: boolean;
 }
 
