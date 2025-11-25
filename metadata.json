@@ -1,0 +1,5 @@
+{
+  "name": "Morphix Image Converter",
+  "description": "A powerful client-side image converter and AI style transformer. Convert file formats efficiently without server uploads, or use AI to transform image styles.",
+  "requestFramePermissions": []
+}
