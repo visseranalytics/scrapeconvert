@@ -3,6 +3,7 @@ import { Layout } from '@/shared/components';
 import { HomePage } from '@/features/home';
 import { ConverterPage } from '@/features/converter';
 import { ScraperPage, ScraperResultsPage } from '@/features/scraper';
+import { NotFoundPage } from '@/features/notfound';
 
 export const router = createBrowserRouter([
   {
@@ -24,6 +25,10 @@ export const router = createBrowserRouter([
       {
         path: 'scraper/results',
         element: <ScraperResultsPage />,
+      },
+      {
+        path: '*',
+        element: <NotFoundPage />,
       },
     ],
   },
