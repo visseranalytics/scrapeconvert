@@ -16,13 +16,16 @@ const Navbar = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-3 group">
-            <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-secondary to-emerald-600 flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-secondary/30 group-hover:shadow-secondary/50 transition-all">
-              SC
-            </div>
-            <div className="flex flex-col">
-              <span className="text-xl font-bold tracking-tight text-white leading-none">ScrapeConvert</span>
-            </div>
+          <Link to="/" className="flex items-center gap-2 group">
+            <img
+              src="/images/favicon.png"
+              alt="ScrapeConvert"
+              className="h-8 w-8 group-hover:scale-105 transition-transform"
+            />
+            <span className="text-xl font-bold tracking-tight leading-none">
+              <span className="text-[#2d5a87]">Scrape</span>
+              <span className="text-[#e8832a]">Convert</span>
+            </span>
           </Link>
 
           {/* Desktop Nav */}
