@@ -182,7 +182,7 @@ const ConverterFeature = ({ files, setFiles }: ConverterFeatureProps) => {
       const url = URL.createObjectURL(content);
       const link = document.createElement("a");
       link.href = url;
-      link.download = "morphix_batch_converted.zip";
+      link.download = "scrapeconvert_batch.zip";
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);

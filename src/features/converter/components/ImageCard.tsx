@@ -99,7 +99,7 @@ const ImageCard = ({ item, onRemove, targetFormat }: ImageCardProps) => {
               {isDone && item.resultUrl && (
                 <a 
                   href={item.resultUrl} 
-                  download={`morphix_${item.file.name.split('.')[0]}.${getExtensionFromMimeType(item.outputFormat || '')}`} 
+                  download={`scrapeconvert_${item.file.name.split('.')[0]}.${getExtensionFromMimeType(item.outputFormat || '')}`} 
                   className="text-slate-400 hover:text-green-400 transition-colors p-1.5 rounded-md hover:bg-slate-700/50"
                   title="Download"
                 >

@@ -11,7 +11,7 @@ const FAQ: React.FC = () => {
   const faqs: FAQItem[] = [
     {
       question: "Are my images uploaded to a server?",
-      answer: "No. Morphix runs entirely in your browser. Your images never leave your device—all processing happens locally using browser APIs and WebWorkers."
+      answer: "No. ScrapeConvert runs entirely in your browser. Your images never leave your device—all processing happens locally using browser APIs and WebWorkers."
     },
     {
       question: "What image formats are supported?",
@@ -19,7 +19,7 @@ const FAQ: React.FC = () => {
     },
     {
       question: "How does the batch URL scraping work?",
-      answer: "Enter multiple URLs (one per line), and Morphix will fetch all images from each page simultaneously. Images are deduplicated automatically, so you won't end up with multiple copies of the same asset."
+      answer: "Enter multiple URLs (one per line), and ScrapeConvert will fetch all images from each page simultaneously. Images are deduplicated automatically, so you won't end up with multiple copies of the same asset."
     },
     {
       question: "Is there a limit to how many images I can process?",
@@ -31,7 +31,7 @@ const FAQ: React.FC = () => {
     },
     {
       question: "Can I use this for production assets?",
-      answer: "Morphix is designed as a development tool to speed up asset collection and optimization. The converted images are production-ready, but we recommend running them through your standard build pipeline."
+      answer: "ScrapeConvert is designed as a development tool to speed up asset collection and optimization. The converted images are production-ready, but we recommend running them through your standard build pipeline."
     }
   ];
 

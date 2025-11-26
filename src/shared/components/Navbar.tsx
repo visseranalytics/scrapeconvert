@@ -17,12 +17,11 @@ const Navbar = () => {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-3 group">
-            <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-primary to-primaryDark flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-primary/30 group-hover:shadow-primary/50 transition-all">
-              M
+            <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-secondary to-emerald-600 flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-secondary/30 group-hover:shadow-secondary/50 transition-all">
+              SC
             </div>
             <div className="flex flex-col">
-              <span className="text-xl font-bold tracking-tight text-white leading-none">Morphix</span>
-              <span className="text-[10px] font-medium text-slate-500 uppercase tracking-widest leading-none mt-1">Studio</span>
+              <span className="text-xl font-bold tracking-tight text-white leading-none">ScrapeConvert</span>
             </div>
           </Link>
 

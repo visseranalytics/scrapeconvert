@@ -12,7 +12,7 @@ const WhyWeBuiltThis: React.FC = () => {
     },
     {
       problem: "Duplicate images everywhere",
-      desc: "Scraped folders full of the same image in different sizes. Morphix deduplicates automatically."
+      desc: "Scraped folders full of the same image in different sizes. ScrapeConvert deduplicates automatically."
     },
     {
       problem: "Workflow interruptions",
@@ -23,7 +23,7 @@ const WhyWeBuiltThis: React.FC = () => {
   return (
     <section className="py-20 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto">
-        <h2 className="text-3xl font-bold text-white mb-4">Why we built Morphix</h2>
+        <h2 className="text-3xl font-bold text-white mb-4">Why we built ScrapeConvert</h2>
         <p className="text-slate-400 mb-8">
           At <span className="text-white font-medium">Visser Analytics</span>, we kept running into the same friction during development—collecting and optimizing image assets was painfully slow. Existing tools didn't cut it:
         </p>
@@ -47,7 +47,7 @@ const WhyWeBuiltThis: React.FC = () => {
         </div>
 
         <p className="text-slate-400 mt-8">
-          Morphix is the internal tool we built to solve these problems. It runs entirely in your browser during development, so there's no uploading, no waiting, and no friction—just fast asset collection and optimization.
+          ScrapeConvert is the internal tool we built to solve these problems. It runs entirely in your browser during development, so there's no uploading, no waiting, and no friction—just fast asset collection and optimization.
         </p>
       </div>
     </section>

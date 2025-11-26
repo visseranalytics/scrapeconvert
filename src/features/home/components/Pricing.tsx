@@ -87,7 +87,7 @@ const Pricing: React.FC = () => {
             </span>
           </h2>
           <p className="text-slate-400 max-w-2xl">
-            We built Morphix for our own workflow and decided to share it. No catch, no upsell—just a tool that works.
+            We built ScrapeConvert for our own workflow and decided to share it. No catch, no upsell—just a tool that works.
           </p>
         </div>
 
@@ -123,7 +123,7 @@ const Pricing: React.FC = () => {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 <p className="text-slate-300 text-sm">
-                  <span className="font-medium text-white">Privacy by design.</span> Morphix processes everything locally in your browser. Your files never touch our servers, making it inherently private and secure.
+                  <span className="font-medium text-white">Privacy by design.</span> ScrapeConvert processes everything locally in your browser. Your files never touch our servers, making it inherently private and secure.
                 </p>
               </div>
             </div>
@@ -134,7 +134,7 @@ const Pricing: React.FC = () => {
                 <div className="flex items-center gap-3 text-center sm:text-left">
                   <span className="text-2xl">☕</span>
                   <p className="text-slate-300 text-sm">
-                    <span className="font-medium text-white">Like Morphix?</span> Support continued development by buying me a coffee.
+                    <span className="font-medium text-white">Like ScrapeConvert?</span> Support continued development by buying me a coffee.
                   </p>
                 </div>
                 <a
