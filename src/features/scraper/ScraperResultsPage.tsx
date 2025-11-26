@@ -4,7 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { ScrapedImage, ImageFile } from '@/shared/types';
 import { formatBytes, readFileAsDataURL, getImageDimensions } from '@/shared/services/imageUtils';
 import { useAppContext } from '@/shared/context/AppContext';
-import { processUrlInput, getFileSize, urlToFile } from './services/scraperService';
+import { processUrlInput, processSitemapInput, getFileSize, urlToFile, ScrapeProgress } from './services/scraperService';
 import ImageResultCard from './components/ImageResultCard';
 
 type SortOption = 'name' | 'size-desc' | 'size-asc' | 'bytes-desc';
@@ -15,6 +15,8 @@ const ScraperResultsPage = () => {
   const { setConverterFiles } = useAppContext();
 
   const urlsParam = searchParams.get('urls') || '';
+  const scrapeMode = searchParams.get('mode') || 'pages';
+  const maxPages = parseInt(searchParams.get('max') || '50', 10);
   const initialSort = (searchParams.get('sort') as SortOption) || 'size-desc';
   const initialFormat = searchParams.get('format') || 'ALL';
   const initialSearch = searchParams.get('q') || '';
@@ -23,6 +25,7 @@ const ScraperResultsPage = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [scrapedImages, setScrapedImages] = useState<ScrapedImage[]>([]);
   const [domainName, setDomainName] = useState<string>('');
+  const [progress, setProgress] = useState<ScrapeProgress | null>(null);
 
   const [searchQuery, setSearchQuery] = useState(initialSearch);
   const [sortBy, setSortBy] = useState<SortOption>(initialSort);
@@ -50,6 +53,8 @@ const ScraperResultsPage = () => {
 
     const scrape = async () => {
       setIsLoading(true);
+      setProgress(null);
+
       try {
         const urlObject = new URL(decodedUrls.split('\n')[0].startsWith('http')
           ? decodedUrls.split('\n')[0]
@@ -60,19 +65,39 @@ const ScraperResultsPage = () => {
       }
 
       try {
-        const images = await processUrlInput(decodedUrls);
-        setScrapedImages(images.map(img => ({ ...img, selected: true })));
-      } catch (error) {
+        let images: ScrapedImage[];
+
+        if (scrapeMode === 'sitemap') {
+          images = await processSitemapInput(
+            decodedUrls,
+            (p) => setProgress(p),
+            maxPages
+          );
+        } else {
+          images = await processUrlInput(decodedUrls);
+        }
+
+        // Set all states together, with images first
+        const processedImages = images.map(img => ({ ...img, selected: true }));
+        setScrapedImages(processedImages);
+
+        // Use requestAnimationFrame to ensure the DOM has updated with images
+        // before hiding the loading state
+        requestAnimationFrame(() => {
+          setProgress(null);
+          setIsLoading(false);
+        });
+      } catch (error: any) {
         console.error('Scraping failed', error);
-        alert('Failed to scrape the provided URL(s). Please check them and try again.');
-        navigate('/scraper');
-      } finally {
+        setProgress(null);
         setIsLoading(false);
+        alert(error.message || 'Failed to scrape the provided URL(s). Please check them and try again.');
+        navigate('/scraper');
       }
     };
 
     scrape();
-  }, [urlsParam, navigate]);
+  }, [urlsParam, scrapeMode, maxPages, navigate]);
 
   const handleImageLoad = (id: string, width: number, height: number) => {
     setScrapedImages(prev => prev.map(img =>
@@ -220,11 +245,51 @@ const ScraperResultsPage = () => {
     }
   };
 
-  if (isLoading) {
+  // Show loading state while loading OR if we have no images yet (prevents flash of "0 images")
+  const showLoading = isLoading || (scrapedImages.length === 0 && progress !== null);
+
+  if (showLoading) {
     return (
-      <div className="min-h-[60vh] flex flex-col items-center justify-center gap-4">
+      <div className="min-h-[60vh] flex flex-col items-center justify-center gap-6">
         <div className="h-12 w-12 rounded-full border-4 border-slate-700 border-t-secondary animate-spin"></div>
-        <p className="text-slate-400 font-medium">Analyzing websites...</p>
+
+        {progress ? (
+          <div className="flex flex-col items-center gap-3 max-w-md text-center">
+            <p className="text-white font-medium">
+              {progress.phase === 'parsing' && 'Parsing sitemap...'}
+              {progress.phase === 'crawling' && 'Crawling pages for images...'}
+              {progress.phase === 'extracting' && 'Extracting images from sitemap...'}
+              {progress.phase === 'done' && 'Finishing up...'}
+            </p>
+
+            {/* Progress bar */}
+            <div className="w-64 h-2 bg-slate-700 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-secondary transition-all duration-300"
+                style={{ width: `${(progress.current / Math.max(progress.total, 1)) * 100}%` }}
+              />
+            </div>
+
+            <p className="text-slate-400 text-sm">
+              {progress.current} / {progress.total}
+              {progress.phase === 'crawling' && ' pages'}
+              {progress.phase === 'parsing' && ' sitemaps'}
+              {progress.phase === 'extracting' && ' images'}
+            </p>
+
+            {progress.currentUrl && (
+              <p className="text-slate-500 text-xs font-mono truncate max-w-full px-4">
+                {progress.currentUrl.length > 60
+                  ? progress.currentUrl.substring(0, 60) + '...'
+                  : progress.currentUrl}
+              </p>
+            )}
+          </div>
+        ) : (
+          <p className="text-slate-400 font-medium">
+            {scrapeMode === 'sitemap' ? 'Discovering sitemap...' : 'Analyzing websites...'}
+          </p>
+        )}
       </div>
     );
   }

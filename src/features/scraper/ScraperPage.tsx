@@ -2,14 +2,23 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PageHero } from '@/shared/components';
 
+type ScrapeMode = 'pages' | 'sitemap';
+
 const ScraperPage = () => {
   const navigate = useNavigate();
   const [inputUrl, setInputUrl] = useState('');
+  const [mode, setMode] = useState<ScrapeMode>('pages');
+  const [maxPages, setMaxPages] = useState(50);
 
   const handleScrape = () => {
     if (!inputUrl.trim()) return;
     const encoded = encodeURIComponent(inputUrl.trim());
-    navigate(`/scraper/results?urls=${encoded}`);
+    const params = new URLSearchParams({ urls: encoded });
+    if (mode === 'sitemap') {
+      params.set('mode', 'sitemap');
+      params.set('max', maxPages.toString());
+    }
+    navigate(`/scraper/results?${params.toString()}`);
   };
 
   return (
@@ -44,11 +53,44 @@ const ScraperPage = () => {
         <div className="bg-surface/50 backdrop-blur-xl border border-white/10 rounded-2xl p-2 shadow-2xl mb-12">
           <div className="bg-dark/50 rounded-xl p-4 md:p-6 border border-white/5">
             <div className="flex flex-col gap-4">
+              {/* Mode Toggle */}
+              <div className="flex items-center gap-2 p-1 bg-dark rounded-lg border border-slate-700">
+                <button
+                  onClick={() => setMode('pages')}
+                  className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all flex items-center justify-center gap-2 ${
+                    mode === 'pages'
+                      ? 'bg-secondary text-white shadow-md'
+                      : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                  }`}
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                  </svg>
+                  Page URLs
+                </button>
+                <button
+                  onClick={() => setMode('sitemap')}
+                  className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all flex items-center justify-center gap-2 ${
+                    mode === 'sitemap'
+                      ? 'bg-secondary text-white shadow-md'
+                      : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                  }`}
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2" />
+                  </svg>
+                  Sitemap Crawl
+                </button>
+              </div>
+
               <div className="relative">
                 <textarea
                   value={inputUrl}
                   onChange={(e) => setInputUrl(e.target.value)}
-                  placeholder="https://example.com/gallery&#10;https://unsplash.com/s/photos/tech"
+                  placeholder={mode === 'pages'
+                    ? "https://example.com/gallery\nhttps://unsplash.com/s/photos/tech"
+                    : "https://example.com/sitemap.xml\nor just https://example.com (we'll find the sitemap)"
+                  }
                   className="w-full h-32 bg-dark border border-slate-700 rounded-xl p-4 text-slate-200 focus:border-secondary focus:ring-1 focus:ring-secondary outline-none transition-all resize-none font-mono text-sm shadow-inner placeholder:text-slate-600"
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' && e.metaKey) {
@@ -57,9 +99,28 @@ const ScraperPage = () => {
                   }}
                 />
                 <div className="absolute bottom-3 right-3 text-[10px] text-slate-500 bg-dark px-2 py-1 rounded border border-slate-800">
-                  Supports multiple URLs
+                  {mode === 'pages' ? 'Supports multiple URLs' : 'Auto-discovers sitemap'}
                 </div>
               </div>
+
+              {/* Sitemap options */}
+              {mode === 'sitemap' && (
+                <div className="flex items-center gap-4 p-3 bg-slate-800/50 rounded-lg border border-slate-700/50">
+                  <label className="text-sm text-slate-400">Max pages to crawl:</label>
+                  <select
+                    value={maxPages}
+                    onChange={(e) => setMaxPages(Number(e.target.value))}
+                    className="bg-dark border border-slate-600 rounded-lg px-3 py-1.5 text-sm text-slate-200 focus:border-secondary outline-none"
+                  >
+                    <option value={25}>25 pages</option>
+                    <option value={50}>50 pages</option>
+                    <option value={100}>100 pages</option>
+                    <option value={250}>250 pages</option>
+                    <option value={500}>500 pages</option>
+                  </select>
+                  <span className="text-xs text-slate-500">Higher = more images, slower</span>
+                </div>
+              )}
 
               <button
                 onClick={handleScrape}
@@ -69,7 +130,7 @@ const ScraperPage = () => {
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-white/80 group-hover:text-white transition-colors" viewBox="0 0 20 20" fill="currentColor">
                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
                 </svg>
-                <span>Start Extraction</span>
+                <span>{mode === 'sitemap' ? 'Crawl Sitemap' : 'Start Extraction'}</span>
               </button>
             </div>
           </div>
