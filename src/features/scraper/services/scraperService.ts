@@ -81,27 +81,44 @@ const getExtension = (url: string): string => {
     return 'unknown';
 };
 
+/**
+ * Extracts image URLs from CSS background-image properties
+ * Handles: url('...'), url("..."), and url(...)
+ */
+const extractBackgroundImageUrls = (cssText: string): string[] => {
+  const urls: string[] = [];
+  // Match url() with optional quotes (single, double, or none)
+  const urlRegex = /url\(\s*(['"]?)([^'")\s]+)\1\s*\)/gi;
+  let match;
+  while ((match = urlRegex.exec(cssText)) !== null) {
+    const url = match[2];
+    // Skip data URLs and empty URLs
+    if (url && !url.startsWith('data:') && url.trim().length > 0) {
+      urls.push(url);
+    }
+  }
+  return urls;
+};
+
 export const extractImagesFromHtml = (html: string, baseUrl: string): ScrapedImage[] => {
   const parser = new DOMParser();
   const doc = parser.parseFromString(html, 'text/html');
   const imgElements = Array.from(doc.getElementsByTagName('img'));
   const uniqueUrls = new Set<string>();
-  
+
   const images: ScrapedImage[] = [];
+  const validBase = baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`;
 
-  imgElements.forEach((img) => {
-    let src = img.getAttribute('src');
-    if (!src) return;
-
-    if (src.startsWith('data:')) return; 
+  // Helper function to add an image if not already seen
+  const addImage = (src: string, alt: string = '') => {
+    if (!src || src.startsWith('data:')) return;
 
     try {
-      const validBase = baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`;
       const absoluteUrl = new URL(src, validBase).href;
 
       if (!uniqueUrls.has(absoluteUrl)) {
         uniqueUrls.add(absoluteUrl);
-        
+
         // Try to guess a name
         const nameParts = absoluteUrl.split('/');
         let name = nameParts.pop()?.split('?')[0] || 'image';
@@ -110,13 +127,13 @@ export const extractImagesFromHtml = (html: string, baseUrl: string): ScrapedIma
         if (!name.toLowerCase().endsWith(format) && format !== 'unknown') {
             name = `${name}.${format}`;
         }
-        
+
         const cleanName = name.length > 30 ? name.substring(0, 30) + '...' : name;
 
         images.push({
           id: uuidv4(),
           url: absoluteUrl,
-          alt: img.getAttribute('alt') || '',
+          alt,
           name: cleanName,
           format: format.toUpperCase(),
           selected: false,
@@ -125,6 +142,32 @@ export const extractImagesFromHtml = (html: string, baseUrl: string): ScrapedIma
     } catch (e) {
       console.warn('Failed to resolve URL:', src, e);
     }
+  };
+
+  // 1. Extract from <img> tags
+  imgElements.forEach((img) => {
+    const src = img.getAttribute('src');
+    if (src) {
+      addImage(src, img.getAttribute('alt') || '');
+    }
+  });
+
+  // 2. Extract from inline style attributes (background-image)
+  const allElements = Array.from(doc.querySelectorAll('[style]'));
+  allElements.forEach((el) => {
+    const style = el.getAttribute('style');
+    if (style && (style.includes('background-image') || style.includes('background:'))) {
+      const bgUrls = extractBackgroundImageUrls(style);
+      bgUrls.forEach(url => addImage(url, 'Background Image'));
+    }
+  });
+
+  // 3. Extract from <style> tags
+  const styleTags = Array.from(doc.getElementsByTagName('style'));
+  styleTags.forEach((styleTag) => {
+    const cssText = styleTag.textContent || '';
+    const bgUrls = extractBackgroundImageUrls(cssText);
+    bgUrls.forEach(url => addImage(url, 'Background Image'));
   });
 
   return images;
