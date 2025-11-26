@@ -333,13 +333,16 @@ export const processUrlInput = async (
   return allImages;
 };
 
+export type ImageBatchCallback = (images: ScrapedImage[]) => void;
+
 /**
  * Process a sitemap URL and crawl all pages for images
  */
 export const processSitemapInput = async (
   input: string,
   onProgress?: ProgressCallback,
-  maxPages: number = 100
+  maxPages: number = 100,
+  onImagesBatch?: ImageBatchCallback
 ): Promise<ScrapedImage[]> => {
   let sitemapUrl = input.trim();
 
@@ -358,29 +361,37 @@ export const processSitemapInput = async (
   const { pageUrls, imageUrls } = await fetchAllSitemapUrls(sitemapUrl, onProgress);
 
   let allImages: ScrapedImage[] = [];
-  const seenUrls = new Set<string>();
+  const seenUrls = new Set<string>(); // Stores normalized URLs for deduplication
 
   // First, add all images found directly in the sitemap (image:loc entries)
   if (imageUrls.length > 0) {
     onProgress?.({ phase: 'extracting', current: 0, total: imageUrls.length, currentUrl: 'Processing sitemap images...' });
-  }
-  for (let i = 0; i < imageUrls.length; i++) {
-    const imgUrl = imageUrls[i];
-    if (!seenUrls.has(imgUrl)) {
-      seenUrls.add(imgUrl);
-      const ext = getExtension(imgUrl);
-      const name = imgUrl.split('/').pop()?.split('?')[0] || `image.${ext}`;
-      allImages.push({
-        id: uuidv4(),
-        url: imgUrl,
-        alt: 'Sitemap Image',
-        name: name.length > 30 ? name.substring(0, 30) + '...' : name,
-        format: ext !== 'unknown' ? ext.toUpperCase() : 'JPG',
-        selected: false
-      });
+    const batchImages: ScrapedImage[] = [];
+    for (let i = 0; i < imageUrls.length; i++) {
+      const imgUrl = imageUrls[i];
+      const normalizedUrl = normalizeUrlForDedup(imgUrl);
+      if (!seenUrls.has(normalizedUrl)) {
+        seenUrls.add(normalizedUrl);
+        const ext = getExtension(imgUrl);
+        const name = imgUrl.split('/').pop()?.split('?')[0] || `image.${ext}`;
+        const newImage: ScrapedImage = {
+          id: uuidv4(),
+          url: imgUrl,
+          alt: 'Sitemap Image',
+          name: name.length > 30 ? name.substring(0, 30) + '...' : name,
+          format: ext !== 'unknown' ? ext.toUpperCase() : 'JPG',
+          selected: false
+        };
+        allImages.push(newImage);
+        batchImages.push(newImage);
+      }
+      if (i % 10 === 0 || i === imageUrls.length - 1) {
+        onProgress?.({ phase: 'extracting', current: i + 1, total: imageUrls.length, currentUrl: imgUrl });
+      }
     }
-    if (i % 10 === 0 || i === imageUrls.length - 1) {
-      onProgress?.({ phase: 'extracting', current: i + 1, total: imageUrls.length, currentUrl: imgUrl });
+    // Stream the sitemap images immediately
+    if (batchImages.length > 0 && onImagesBatch) {
+      onImagesBatch(batchImages);
     }
   }
 
@@ -408,48 +419,77 @@ export const processSitemapInput = async (
     });
 
     try {
+      const newImages: ScrapedImage[] = [];
+
       // Check if it's a direct image URL
       const ext = getExtension(pageUrl);
       if (ext !== 'unknown') {
-        if (!seenUrls.has(pageUrl)) {
-          seenUrls.add(pageUrl);
-          allImages.push({
+        const normalizedUrl = normalizeUrlForDedup(pageUrl);
+        if (!seenUrls.has(normalizedUrl)) {
+          seenUrls.add(normalizedUrl);
+          const newImage: ScrapedImage = {
             id: uuidv4(),
             url: pageUrl,
             alt: 'Sitemap Image',
             name: pageUrl.split('/').pop() || `image.${ext}`,
             format: ext.toUpperCase(),
             selected: false
-          });
+          };
+          allImages.push(newImage);
+          newImages.push(newImage);
         }
-        continue;
+      } else {
+        // Fetch and extract images from the page
+        const html = await fetchHtml(pageUrl);
+        const images = extractImagesFromHtml(html, pageUrl);
+
+        // Deduplicate and collect new images
+        console.log(`[DEDUP] Processing ${images.length} images from ${pageUrl}`);
+        for (const img of images) {
+          const normalizedUrl = normalizeUrlForDedup(img.url);
+          const isDuplicate = seenUrls.has(normalizedUrl);
+          console.log(`[DEDUP] ${isDuplicate ? 'SKIP (duplicate)' : 'ADD'}: ${img.name}`);
+          if (!isDuplicate) {
+            seenUrls.add(normalizedUrl);
+            allImages.push(img);
+            newImages.push(img);
+          }
+        }
+        console.log(`[DEDUP] Total seen URLs: ${seenUrls.size}, Total images: ${allImages.length}`);
       }
 
-      // Fetch and extract images from the page
-      const html = await fetchHtml(pageUrl);
-      const images = extractImagesFromHtml(html, pageUrl);
-
-      // Deduplicate
-      for (const img of images) {
-        if (!seenUrls.has(img.url)) {
-          seenUrls.add(img.url);
-          allImages.push(img);
-        }
+      // Stream new images to UI as they're found
+      if (newImages.length > 0 && onImagesBatch) {
+        onImagesBatch(newImages);
       }
     } catch (error) {
       console.warn(`Failed to crawl ${pageUrl}:`, error);
     }
   }
 
-  // Don't call progress with 'done' - let the caller handle completion
   return allImages;
+};
+
+/**
+ * Normalizes a URL for deduplication (removes protocol, query params, hash, trailing slashes)
+ */
+const normalizeUrlForDedup = (url: string): string => {
+  const normalized = url
+    .replace(/^https?:\/\//, '')
+    .split('?')[0]
+    .split('#')[0]
+    .replace(/\/+$/, '')
+    .toLowerCase();
+  console.log(`[DEDUP] Original: ${url}`);
+  console.log(`[DEDUP] Normalized: ${normalized}`);
+  return normalized;
 };
 
 export const urlToFile = async (url: string, filename: string): Promise<File> => {
   try {
     const response = await fetchWithFallback(url);
     const blob = await response.blob();
-    
+
     // Determine mime type
     let type = response.headers.get('content-type');
     if (!type || type === 'application/octet-stream') {
