@@ -22,8 +22,8 @@ export const convertImage = async (
   sourceUrl: string,
   format: ConversionFormat,
   quality: number,
-  maxWidth: number,
-  maxHeight: number,
+  maxWidth: number | null,
+  maxHeight: number | null,
   maintainAspectRatio: boolean
 ): Promise<Blob> => {
   return new Promise((resolve, reject) => {
@@ -34,15 +34,19 @@ export const convertImage = async (
       let width = img.width;
       let height = img.height;
 
+      // Only apply resizing if max dimensions are specified
+      const effectiveMaxWidth = maxWidth || width;
+      const effectiveMaxHeight = maxHeight || height;
+
       if (maintainAspectRatio) {
-        const ratio = Math.min(maxWidth / width, maxHeight / height);
+        const ratio = Math.min(effectiveMaxWidth / width, effectiveMaxHeight / height);
         if (ratio < 1) {
           width = Math.round(width * ratio);
           height = Math.round(height * ratio);
         }
       } else {
-        width = Math.min(width, maxWidth);
-        height = Math.min(height, maxHeight);
+        width = Math.min(width, effectiveMaxWidth);
+        height = Math.min(height, effectiveMaxHeight);
       }
 
       const canvas = document.createElement('canvas');
