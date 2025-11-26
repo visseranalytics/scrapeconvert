@@ -52,20 +52,18 @@ const ScraperResultsPage = () => {
       return;
     }
 
-    const decodedUrls = decodeURIComponent(urlsParam);
-
     const scrape = async () => {
       setIsLoading(true);
       setProgress(null);
       setScrapeComplete(false);
 
       try {
-        const urlObject = new URL(decodedUrls.split('\n')[0].startsWith('http')
-          ? decodedUrls.split('\n')[0]
-          : `https://${decodedUrls.split('\n')[0]}`);
+        const urlObject = new URL(urlsParam.split('\n')[0].startsWith('http')
+          ? urlsParam.split('\n')[0]
+          : `https://${urlsParam.split('\n')[0]}`);
         setDomainName(urlObject.hostname);
       } catch {
-        setDomainName(decodedUrls.split('\n')[0]);
+        setDomainName(urlsParam.split('\n')[0]);
       }
 
       try {
@@ -81,13 +79,13 @@ const ScraperResultsPage = () => {
 
         if (scrapeMode === 'sitemap') {
           images = await processSitemapInput(
-            decodedUrls,
+            urlsParam,
             (p) => setProgress(p),
             maxPages,
             handleImageBatch
           );
         } else {
-          images = await processUrlInput(decodedUrls);
+          images = await processUrlInput(urlsParam);
           // For non-sitemap, set all images at once
           const processedImages = images.map(img => ({ ...img, selected: true }));
           setScrapedImages(processedImages);
