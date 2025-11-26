@@ -16,7 +16,7 @@ export default defineConfig(({ mode }) => {
       tailwindcss(),
       Sitemap({
         hostname: 'https://scrapeconvert.com',
-        dynamicRoutes: ['/', '/converter', '/scraper'],
+        dynamicRoutes: ['/', '/converter', '/scraper', '/terms', '/privacy', '/acceptable-use'],
         generateRobotsTxt: false,
       }),
     ],

@@ -1,14 +1,29 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 import { PageHero } from '@/shared/components';
 
 type ScrapeMode = 'pages' | 'sitemap';
+
+const TERMS_ACCEPTED_KEY = 'scrapeconvert_terms_accepted';
 
 const ScraperPage = () => {
   const navigate = useNavigate();
   const [inputUrl, setInputUrl] = useState('');
   const [mode, setMode] = useState<ScrapeMode>('pages');
   const [maxPages, setMaxPages] = useState(50);
+  const [showTermsModal, setShowTermsModal] = useState(false);
+
+  useEffect(() => {
+    const accepted = localStorage.getItem(TERMS_ACCEPTED_KEY);
+    if (!accepted) {
+      setShowTermsModal(true);
+    }
+  }, []);
+
+  const handleAcceptTerms = () => {
+    localStorage.setItem(TERMS_ACCEPTED_KEY, 'true');
+    setShowTermsModal(false);
+  };
 
   const handleScrape = () => {
     if (!inputUrl.trim()) return;
@@ -177,6 +192,48 @@ const ScraperPage = () => {
           ))}
         </div>
       </div>
+
+      {/* Terms of Use Modal */}
+      {showTermsModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+          <div className="bg-surface border border-white/10 rounded-2xl max-w-md w-full p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-xl bg-secondary/20 flex items-center justify-center">
+                <svg className="w-5 h-5 text-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <h2 className="text-xl font-bold text-white">Terms of Use</h2>
+            </div>
+
+            <div className="text-slate-300 text-sm space-y-3 mb-6">
+              <p>
+                By using this tool, you confirm that:
+              </p>
+              <ul className="list-disc list-inside space-y-2 text-slate-400">
+                <li>You have the right to download the content you're accessing</li>
+                <li>You have permission from the content owner, or the content is publicly available for download</li>
+                <li>You will respect copyright and intellectual property rights</li>
+                <li>You will comply with the target website's terms of service</li>
+              </ul>
+              <p className="text-slate-500 text-xs pt-2">
+                All downloads occur through your browser. We are not responsible for how you use downloaded content.
+                See our{' '}
+                <Link to="/terms" className="text-primary hover:underline">Terms of Service</Link>
+                {' '}and{' '}
+                <Link to="/acceptable-use" className="text-primary hover:underline">Acceptable Use Policy</Link>.
+              </p>
+            </div>
+
+            <button
+              onClick={handleAcceptTerms}
+              className="w-full py-3 bg-secondary hover:bg-emerald-600 text-white font-semibold rounded-xl transition-colors"
+            >
+              I Understand & Accept
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
