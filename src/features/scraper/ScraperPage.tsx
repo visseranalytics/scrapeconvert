@@ -12,8 +12,8 @@ const ScraperPage = () => {
 
   const handleScrape = () => {
     if (!inputUrl.trim()) return;
-    const encoded = encodeURIComponent(inputUrl.trim());
-    const params = new URLSearchParams({ urls: encoded });
+    const params = new URLSearchParams();
+    params.set('urls', inputUrl.trim());
     if (mode === 'sitemap') {
       params.set('mode', 'sitemap');
       params.set('max', maxPages.toString());
