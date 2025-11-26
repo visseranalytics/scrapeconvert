@@ -1,0 +1,21 @@
+{
+  "name": "ScrapeConvert",
+  "short_name": "ScrapeConvert",
+  "description": "Extract images from any website and convert them to modern formats. 100% client-side processing.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
+  "icons": [
+    {
+      "src": "/images/favicon.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/images/favicon.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
