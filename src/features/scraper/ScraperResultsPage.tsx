@@ -4,7 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { ScrapedImage, ImageFile } from '@/shared/types';
 import { formatBytes, readFileAsDataURL, getImageDimensions } from '@/shared/services/imageUtils';
 import { useAppContext } from '@/shared/context/AppContext';
-import { processUrlInput, processSitemapInput, getFileSize, urlToFile, ScrapeProgress } from './services/scraperService';
+import { processUrlInput, processSitemapInput, getFileSize, urlToFile, ScrapeProgress, ImageBatchCallback } from './services/scraperService';
 import ImageResultCard from './components/ImageResultCard';
 
 type SortOption = 'name' | 'size-desc' | 'size-asc' | 'bytes-desc';
@@ -26,6 +26,7 @@ const ScraperResultsPage = () => {
   const [scrapedImages, setScrapedImages] = useState<ScrapedImage[]>([]);
   const [domainName, setDomainName] = useState<string>('');
   const [progress, setProgress] = useState<ScrapeProgress | null>(null);
+  const [scrapeComplete, setScrapeComplete] = useState(false);
 
   const [searchQuery, setSearchQuery] = useState(initialSearch);
   const [sortBy, setSortBy] = useState<SortOption>(initialSort);
@@ -54,6 +55,7 @@ const ScraperResultsPage = () => {
     const scrape = async () => {
       setIsLoading(true);
       setProgress(null);
+      setScrapeComplete(false);
 
       try {
         const urlObject = new URL(decodedUrls.split('\n')[0].startsWith('http')
@@ -67,26 +69,30 @@ const ScraperResultsPage = () => {
       try {
         let images: ScrapedImage[];
 
+        // Callback to stream images as they're found
+        const handleImageBatch: ImageBatchCallback = (newImages) => {
+          const processedBatch = newImages.map(img => ({ ...img, selected: true }));
+          setScrapedImages(prev => [...prev, ...processedBatch]);
+          // Show content as soon as first images arrive
+          setScrapeComplete(true);
+        };
+
         if (scrapeMode === 'sitemap') {
           images = await processSitemapInput(
             decodedUrls,
             (p) => setProgress(p),
-            maxPages
+            maxPages,
+            handleImageBatch
           );
         } else {
           images = await processUrlInput(decodedUrls);
+          // For non-sitemap, set all images at once
+          const processedImages = images.map(img => ({ ...img, selected: true }));
+          setScrapedImages(processedImages);
         }
-
-        // Set all states together, with images first
-        const processedImages = images.map(img => ({ ...img, selected: true }));
-        setScrapedImages(processedImages);
-
-        // Use requestAnimationFrame to ensure the DOM has updated with images
-        // before hiding the loading state
-        requestAnimationFrame(() => {
-          setProgress(null);
-          setIsLoading(false);
-        });
+        setProgress({ phase: 'done', current: 0, total: 0 });
+        setIsLoading(false);
+        setScrapeComplete(true);
       } catch (error: any) {
         console.error('Scraping failed', error);
         setProgress(null);
@@ -245,8 +251,8 @@ const ScraperResultsPage = () => {
     }
   };
 
-  // Show loading state while loading OR if we have no images yet (prevents flash of "0 images")
-  const showLoading = isLoading || (scrapedImages.length === 0 && progress !== null);
+  // Show loading state until scraping is complete (prevents flash of "0 images")
+  const showLoading = !scrapeComplete;
 
   if (showLoading) {
     return (
@@ -439,9 +445,21 @@ const ScraperResultsPage = () => {
       {/* MAIN CONTENT */}
       <div className="flex-1 flex flex-col min-w-0 bg-dark/30 rounded-2xl border border-white/5 overflow-hidden">
         <div className="h-16 flex items-center justify-between px-6 border-b border-white/5 bg-surface/30 backdrop-blur-md">
-          <h2 className="text-base font-medium text-slate-200">
-            Found <span className="font-bold text-white">{filteredImages.length}</span> images
-          </h2>
+          <div className="flex items-center gap-3">
+            <h2 className="text-base font-medium text-slate-200">
+              Found <span className="font-bold text-white">{filteredImages.length}</span> images
+            </h2>
+            {progress && progress.phase !== 'done' && (
+              <div className="flex items-center gap-2 px-3 py-1 bg-secondary/10 border border-secondary/30 rounded-full animate-pulse">
+                <div className="h-2 w-2 rounded-full bg-secondary animate-ping"></div>
+                <span className="text-xs font-medium text-secondary">
+                  {progress.phase === 'crawling' && `Crawling ${progress.current}/${progress.total}`}
+                  {progress.phase === 'parsing' && `Parsing sitemaps...`}
+                  {progress.phase === 'extracting' && `Extracting ${progress.current}/${progress.total}`}
+                </span>
+              </div>
+            )}
+          </div>
           <div className="flex items-center gap-4">
             <div className="hidden sm:block text-xs text-slate-400 font-mono bg-dark/50 px-2 py-1 rounded border border-white/5">{domainName}</div>
             <div className="h-4 w-px bg-slate-700 hidden sm:block"></div>
