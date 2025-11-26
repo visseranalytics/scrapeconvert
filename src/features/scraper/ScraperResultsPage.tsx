@@ -33,15 +33,17 @@ const ScraperResultsPage = () => {
   const [selectedFormat, setSelectedFormat] = useState<string>(initialFormat);
   const [invertPreviewBg, setInvertPreviewBg] = useState(false);
 
-  // Sync filters to URL
+  // Sync filters to URL (preserve mode and max params)
   useEffect(() => {
     const params = new URLSearchParams();
     params.set('urls', urlsParam);
+    if (scrapeMode !== 'pages') params.set('mode', scrapeMode);
+    if (scrapeMode === 'sitemap' && maxPages !== 50) params.set('max', maxPages.toString());
     if (sortBy !== 'size-desc') params.set('sort', sortBy);
     if (selectedFormat !== 'ALL') params.set('format', selectedFormat);
     if (searchQuery) params.set('q', searchQuery);
     setSearchParams(params, { replace: true });
-  }, [sortBy, selectedFormat, searchQuery, urlsParam, setSearchParams]);
+  }, [sortBy, selectedFormat, searchQuery, urlsParam, scrapeMode, maxPages, setSearchParams]);
 
   // Scrape on mount
   useEffect(() => {
