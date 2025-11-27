@@ -22,7 +22,7 @@ const WhyWeBuiltThis: React.FC = () => {
 
   return (
     <section className="py-20 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-6xl mx-auto">
         <h2 className="text-3xl font-bold text-white mb-4">Why we built ScrapeConvert</h2>
         <p className="text-slate-400 mb-8">
           At <span className="text-white font-medium">Visser Analytics</span>, we kept running into the same friction during development—collecting and optimizing image assets was painfully slow. Existing tools didn't cut it:

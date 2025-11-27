@@ -1,5 +1,10 @@
 import { ConversionFormat } from '../types';
 
+export interface ConversionResult {
+  blob: Blob;
+  keptOriginal: boolean;
+}
+
 export const readFileAsDataURL = (file: File): Promise<string> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -24,8 +29,9 @@ export const convertImage = async (
   quality: number,
   maxWidth: number | null,
   maxHeight: number | null,
-  maintainAspectRatio: boolean
-): Promise<Blob> => {
+  maintainAspectRatio: boolean,
+  originalFile?: File
+): Promise<ConversionResult> => {
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.crossOrigin = 'Anonymous';
@@ -69,7 +75,12 @@ export const convertImage = async (
       canvas.toBlob(
         (blob) => {
           if (blob) {
-            resolve(blob);
+            // If original file provided and converted is larger, keep original
+            if (originalFile && blob.size > originalFile.size) {
+              resolve({ blob: originalFile, keptOriginal: true });
+            } else {
+              resolve({ blob, keptOriginal: false });
+            }
           } else {
             reject(new Error('Canvas to Blob failed. Possible CORS issue if image source is remote.'));
           }

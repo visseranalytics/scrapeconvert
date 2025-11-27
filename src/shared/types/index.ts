@@ -15,6 +15,7 @@ export interface ImageFile {
   resultSize?: number;
   outputFormat?: ConversionFormat;
   errorMsg?: string;
+  keptOriginal?: boolean; // True when converted file was larger than original
 }
 
 export interface ScrapedImage {

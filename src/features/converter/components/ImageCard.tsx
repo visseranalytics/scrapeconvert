@@ -11,6 +11,7 @@ const ImageCard = ({ item, onRemove, targetFormat }: ImageCardProps) => {
   const isDone = item.status === 'done';
   const isProcessing = item.status === 'processing';
   const isError = item.status === 'error';
+  const keptOriginal = item.keptOriginal;
 
   // Determine extensions for the badge
   const sourceExt = getExtensionFromMimeType(item.file.type || 'image/jpeg').toUpperCase();
@@ -27,7 +28,8 @@ const ImageCard = ({ item, onRemove, targetFormat }: ImageCardProps) => {
   return (
     <div className={`
       relative overflow-hidden rounded-xl border transition-all duration-300
-      ${isDone ? 'bg-surface border-green-500/30 hover:border-green-500/50' : 'bg-surface border-slate-700 hover:border-slate-600'}
+      ${isDone && !keptOriginal ? 'bg-surface border-green-500/30 hover:border-green-500/50' : 'bg-surface border-slate-700 hover:border-slate-600'}
+      ${isDone && keptOriginal ? 'border-amber-500/30 hover:border-amber-500/50' : ''}
       ${isError ? 'border-red-500/50' : ''}
     `}>
       <div className="flex flex-col sm:flex-row h-auto sm:h-32">
@@ -67,13 +69,20 @@ const ImageCard = ({ item, onRemove, targetFormat }: ImageCardProps) => {
                 
                 {/* Size Logic */}
                 {isDone && item.resultSize ? (
-                  <div className="flex items-center gap-1.5 whitespace-nowrap">
-                    <span className="line-through decoration-slate-500 opacity-60">{formatBytes(item.file.size)}</span>
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 text-slate-500" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
-                    </svg>
-                    <span className="text-green-400 font-bold">{formatBytes(item.resultSize)}</span>
-                  </div>
+                  keptOriginal ? (
+                    <div className="flex items-center gap-1.5 whitespace-nowrap">
+                      <span className="text-amber-400 font-bold">{formatBytes(item.resultSize)}</span>
+                      <span className="text-amber-400 text-[10px]">(kept original)</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-1.5 whitespace-nowrap">
+                      <span className="line-through decoration-slate-500 opacity-60">{formatBytes(item.file.size)}</span>
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 text-slate-500" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                      </svg>
+                      <span className="text-green-400 font-bold">{formatBytes(item.resultSize)}</span>
+                    </div>
+                  )
                 ) : (
                   <span className="whitespace-nowrap">{formatBytes(item.file.size)}</span>
                 )}
@@ -142,6 +151,15 @@ const ImageCard = ({ item, onRemove, targetFormat }: ImageCardProps) => {
 
                {item.status === 'idle' && (
                  <span className="text-xs text-slate-500 font-medium bg-slate-800 px-2 py-1 rounded">Ready to convert</span>
+               )}
+
+               {isDone && keptOriginal && (
+                 <div className="flex items-center gap-2 text-amber-400">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                    </svg>
+                    <span className="text-xs font-medium">Converted file was larger - original kept</span>
+                 </div>
                )}
              </div>
           </div>

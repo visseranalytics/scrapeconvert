@@ -11,7 +11,7 @@ const Hero = ({ onNavigate }: HeroProps) => {
         <div className="absolute bottom-20 right-1/4 w-96 h-96 bg-secondary/10 rounded-full blur-[120px]"></div>
       </div>
 
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center z-10">
+      <div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center z-10">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-800/50 border border-slate-700/50 mb-8 backdrop-blur-sm">
           <span className="flex h-2 w-2 rounded-full bg-green-400 animate-pulse"></span>
           <span className="text-xs font-medium text-slate-300">v2.0 Now Available</span>
@@ -49,7 +49,7 @@ const Hero = ({ onNavigate }: HeroProps) => {
         </div>
 
         {/* Feature Grid Mini */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto mt-20">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto mt-20">
           {[
             { title: "Browser Native", desc: "No server uploads. Your files never leave your device." },
             { title: "Batch Processing", desc: "Convert hundreds of images in seconds with WebWorkers." },

@@ -41,7 +41,7 @@ const FAQ: React.FC = () => {
 
   return (
     <section className="py-20 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-6xl mx-auto">
         <h2 className="text-3xl font-bold text-white mb-8">Frequently asked questions</h2>
 
         <div className="space-y-3">

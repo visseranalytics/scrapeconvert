@@ -77,6 +77,7 @@ const ConverterFeature = ({ files, setFiles }: ConverterFeatureProps) => {
           resultUrl: undefined,
           resultSize: undefined,
           errorMsg: undefined,
+          keptOriginal: undefined,
         };
       })
     );
@@ -109,21 +110,23 @@ const ConverterFeature = ({ files, setFiles }: ConverterFeatureProps) => {
         }
 
         try {
-          const blob = await convertImage(
+          const result = await convertImage(
             item.previewUrl,
             currentSettings.format,
             currentSettings.quality,
             currentSettings.maxWidth,
             currentSettings.maxHeight,
-            currentSettings.maintainAspectRatio
+            currentSettings.maintainAspectRatio,
+            item.file
           );
-          const resultUrl = URL.createObjectURL(blob);
+          const resultUrl = URL.createObjectURL(result.blob);
           return {
             id: item.id,
             status: "done",
             resultUrl,
-            resultSize: blob.size,
+            resultSize: result.blob.size,
             outputFormat: currentSettings.format,
+            keptOriginal: result.keptOriginal,
           } as const;
         } catch (error: any) {
           return {

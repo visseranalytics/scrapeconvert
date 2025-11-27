@@ -70,7 +70,7 @@ const Pricing: React.FC = () => {
           animation: letterPop 2s ease-in-out infinite;
         }
       `}</style>
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-6xl mx-auto">
         <div className="mb-12">
           <h2 className="text-3xl font-bold text-white mb-4">
             Simple pricing:{' '}
