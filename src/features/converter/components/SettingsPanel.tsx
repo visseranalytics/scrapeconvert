@@ -1,5 +1,51 @@
 import { ConversionFormat, ConversionSettings } from '@/shared/types';
 
+interface ConversionProfile {
+  id: string;
+  name: string;
+  description: string;
+  settings: Partial<ConversionSettings>;
+}
+
+const PROFILES: ConversionProfile[] = [
+  {
+    id: 'web-optimized',
+    name: 'Web Optimized',
+    description: 'Best balance of quality & size',
+    settings: { format: ConversionFormat.WEBP, quality: 80, maxWidth: 1920, maxHeight: 1080, maintainAspectRatio: true, keepSmaller: true }
+  },
+  {
+    id: 'high-quality',
+    name: 'High Quality',
+    description: 'Minimal compression',
+    settings: { format: ConversionFormat.JPEG, quality: 95, maxWidth: 0, maxHeight: 0, maintainAspectRatio: true, keepSmaller: false }
+  },
+  {
+    id: 'lossless',
+    name: 'Lossless',
+    description: 'No quality loss (PNG)',
+    settings: { format: ConversionFormat.PNG, quality: 100, maxWidth: 0, maxHeight: 0, maintainAspectRatio: true, keepSmaller: false }
+  },
+  {
+    id: 'small-file',
+    name: 'Small File',
+    description: 'Maximum compression',
+    settings: { format: ConversionFormat.WEBP, quality: 60, maxWidth: 1280, maxHeight: 720, maintainAspectRatio: true, keepSmaller: true }
+  },
+  {
+    id: 'social-media',
+    name: 'Social Media',
+    description: 'Optimized for sharing',
+    settings: { format: ConversionFormat.JPEG, quality: 85, maxWidth: 1200, maxHeight: 1200, maintainAspectRatio: true, keepSmaller: true }
+  },
+  {
+    id: 'thumbnail',
+    name: 'Thumbnail',
+    description: 'Small preview images',
+    settings: { format: ConversionFormat.WEBP, quality: 75, maxWidth: 300, maxHeight: 300, maintainAspectRatio: true, keepSmaller: true }
+  },
+];
+
 interface SettingsPanelProps {
   settings: ConversionSettings;
   onSettingsChange: (newSettings: ConversionSettings) => void;
@@ -11,13 +57,48 @@ const SettingsPanel = ({
   onSettingsChange,
   disabled
 }: SettingsPanelProps) => {
-  
+
   const handleChange = (key: keyof ConversionSettings, value: any) => {
     onSettingsChange({ ...settings, [key]: value });
   };
 
+  const applyProfile = (profile: ConversionProfile) => {
+    onSettingsChange({ ...settings, ...profile.settings });
+  };
+
+  // Check which profile matches current settings (if any)
+  const activeProfileId = PROFILES.find(p => {
+    const s = p.settings;
+    return s.format === settings.format &&
+           s.quality === settings.quality &&
+           s.maxWidth === settings.maxWidth &&
+           s.maxHeight === settings.maxHeight;
+  })?.id;
+
   return (
-    <div className="glass-panel w-full rounded-xl p-4 shadow-lg border border-white/5">
+    <div className="glass-panel w-full rounded-xl p-4 shadow-lg border border-white/5 space-y-4">
+      {/* Profile Presets */}
+      <div className="flex flex-wrap gap-2">
+        {PROFILES.map(profile => (
+          <button
+            key={profile.id}
+            onClick={() => applyProfile(profile)}
+            disabled={disabled}
+            title={profile.description}
+            className={`
+              px-3 py-1.5 rounded-lg text-xs font-medium transition-all
+              ${activeProfileId === profile.id
+                ? 'bg-primary text-white shadow-md shadow-primary/30'
+                : 'bg-slate-700/50 text-slate-300 hover:bg-slate-600/50 hover:text-white border border-slate-600/50'
+              }
+              disabled:opacity-50 disabled:cursor-not-allowed
+            `}
+          >
+            {profile.name}
+          </button>
+        ))}
+      </div>
+
       <div className="flex flex-col lg:flex-row gap-6 items-center justify-between">
         
         {/* Left: Format & Quality */}
@@ -107,6 +188,31 @@ const SettingsPanel = ({
                 </svg>
               </div>
               <span className="text-sm font-medium text-slate-300 group-hover:text-white transition-colors">Lock Ratio</span>
+            </label>
+
+            <label className="flex items-center gap-2 cursor-pointer group select-none" title="If converted file is larger than original, keep the original">
+              <div className="relative flex items-center">
+                <input
+                  type="checkbox"
+                  checked={settings.keepSmaller}
+                  onChange={(e) => handleChange('keepSmaller', e.target.checked)}
+                  disabled={disabled}
+                  className="peer h-5 w-5 cursor-pointer appearance-none rounded border border-slate-600 bg-dark checked:border-primary checked:bg-primary focus:outline-none transition-all"
+                />
+                <svg
+                  className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-3.5 w-3.5 opacity-0 peer-checked:opacity-100 text-white"
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+              </div>
+              <span className="text-sm font-medium text-slate-300 group-hover:text-white transition-colors">Keep Smaller</span>
             </label>
         </div>
       </div>

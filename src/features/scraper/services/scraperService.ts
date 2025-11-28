@@ -2,13 +2,36 @@ import { v4 as uuidv4 } from 'uuid';
 import { ScrapedImage } from '@/shared/types';
 
 export interface ScrapeProgress {
-  phase: 'parsing' | 'crawling' | 'extracting' | 'done';
+  phase: 'parsing' | 'crawling' | 'extracting' | 'deduplicating' | 'done';
   current: number;
   total: number;
   currentUrl?: string;
 }
 
+export interface CrawlLogEntry {
+  url: string;
+  imageCount: number;
+  status: 'pending' | 'crawling' | 'done' | 'error';
+}
+
+export type CrawlLogCallback = (entries: CrawlLogEntry[]) => void;
+
 export type ProgressCallback = (progress: ScrapeProgress) => void;
+
+// Sitemap discovery types
+export interface SitemapLocation {
+  url: string;
+  label: string;
+  status: 'pending' | 'checking' | 'found' | 'not_found';
+}
+
+export interface SitemapDiscoveryProgress {
+  phase: 'discovering';
+  locations: SitemapLocation[];
+  foundUrl?: string;
+}
+
+export type DiscoveryCallback = (progress: SitemapDiscoveryProgress) => void;
 
 // List of proxies to try in sequence.
 const PROXIES = [
@@ -28,9 +51,16 @@ async function fetchWithFallback(url: string, options?: RequestInit): Promise<Re
   // 1. Try Direct Fetch (Optimistic)
   try {
     const response = await fetch(url, { ...options, mode: 'cors' });
-    if (response.ok) return response;
+    // Check for success (2xx status codes only)
+    if (response.ok && response.status >= 200 && response.status < 300) return response;
+    // If we got a 404, the resource doesn't exist - don't try proxies
+    if (response.status === 404) {
+      throw new Error(`Resource not found: ${url}`);
+    }
   } catch (e) {
     // Direct fetch failed (likely CORS), proceed to proxies
+    // But if it's a "not found" error, rethrow it
+    if (e instanceof Error && e.message.includes('not found')) throw e;
   }
 
   // 2. Try Proxies in order
@@ -41,8 +71,14 @@ async function fetchWithFallback(url: string, options?: RequestInit): Promise<Re
       // We strip custom options for the proxy call usually, but let's try passing method if it's HEAD
       const proxyOptions = options?.method ? { method: options.method } : undefined;
       const response = await fetch(proxyUrl, proxyOptions);
-      if (response.ok) return response;
+      // Proxy returns 404 means the underlying resource doesn't exist
+      if (response.status === 404) {
+        throw new Error(`Resource not found: ${url}`);
+      }
+      if (response.ok && response.status >= 200 && response.status < 300) return response;
     } catch (e) {
+      // If it's a "not found" error, stop trying - resource doesn't exist
+      if (e instanceof Error && e.message.includes('not found')) throw e;
       console.warn(`Proxy attempt failed for ${url} using ${createProxyUrl('').split('?')[0]}`, e);
       // Continue to next proxy
     }
@@ -82,6 +118,65 @@ const getExtension = (url: string): string => {
 };
 
 /**
+ * Blocked domains for paid stock photo sites
+ * Images from these domains will be excluded to prevent unauthorized use
+ */
+const BLOCKED_IMAGE_DOMAINS = [
+  // Adobe Stock
+  'stock.adobe.com',
+  'as1.ftcdn.net',
+  'as2.ftcdn.net',
+  't3.ftcdn.net',
+  't4.ftcdn.net',
+  'ftcdn.net',
+  // iStock / Getty
+  'istockphoto.com',
+  'media.istockphoto.com',
+  'gettyimages.com',
+  'media.gettyimages.com',
+  // Shutterstock
+  'shutterstock.com',
+  'image.shutterstock.com',
+  // Depositphotos
+  'depositphotos.com',
+  'st.depositphotos.com',
+  'static.depositphotos.com',
+  // 123RF
+  '123rf.com',
+  'previews.123rf.com',
+  // Dreamstime
+  'dreamstime.com',
+  'thumbs.dreamstime.com',
+  // Alamy
+  'alamy.com',
+  'c8.alamy.com',
+  // Bigstock
+  'bigstockphoto.com',
+  'static.bigstockphoto.com',
+  // Pond5
+  'pond5.com',
+  // Can Stock Photo
+  'canstockphoto.com',
+  // Stock photo CDNs
+  'media-photos.depop.com',
+];
+
+/**
+ * Check if a URL is from a blocked paid stock photo domain
+ */
+const isBlockedDomain = (url: string): boolean => {
+  try {
+    const urlObj = new URL(url);
+    const hostname = urlObj.hostname.toLowerCase();
+    return BLOCKED_IMAGE_DOMAINS.some(domain =>
+      hostname === domain || hostname.endsWith('.' + domain)
+    );
+  } catch {
+    return false;
+  }
+};
+
+/**
  * Extracts image URLs from CSS background-image properties
  * Handles: url('...'), url("..."), and url(...)
  */
@@ -100,11 +195,15 @@ const extractBackgroundImageUrls = (cssText: string): string[] => {
   return urls;
 };
 
-export const extractImagesFromHtml = (html: string, baseUrl: string): ScrapedImage[] => {
+export const extractImagesFromHtml = (html: string, baseUrl: string, sourcePageUrl?: string): ScrapedImage[] => {
   const parser = new DOMParser();
   const doc = parser.parseFromString(html, 'text/html');
   const imgElements = Array.from(doc.getElementsByTagName('img'));
   const uniqueUrls = new Set<string>();
+
+  // Extract page title
+  const titleElement = doc.querySelector('title');
+  const sourcePageTitle = titleElement?.textContent?.trim() || undefined;
 
   const images: ScrapedImage[] = [];
   const validBase = baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`;
@@ -116,13 +215,20 @@ export const extractImagesFromHtml = (html: string, baseUrl: string): ScrapedIma
     try {
       const absoluteUrl = new URL(src, validBase).href;
 
-      if (!uniqueUrls.has(absoluteUrl)) {
-        uniqueUrls.add(absoluteUrl);
+      // Block paid stock photo domains
+      if (isBlockedDomain(absoluteUrl)) return;
 
-        // Try to guess a name
-        const nameParts = absoluteUrl.split('/');
-        let name = nameParts.pop()?.split('?')[0] || 'image';
-        const format = getExtension(absoluteUrl) || 'jpg';
+      // Clean the URL - strip query params and hash
+      const urlObj = new URL(absoluteUrl);
+      const cleanedUrl = urlObj.origin + urlObj.pathname;
+
+      if (!uniqueUrls.has(cleanedUrl)) {
+        uniqueUrls.add(cleanedUrl);
+
+        // Try to guess a name from cleaned URL
+        const nameParts = cleanedUrl.split('/');
+        let name = nameParts.pop() || 'image';
+        const format = getExtension(cleanedUrl) || 'jpg';
 
         if (!name.toLowerCase().endsWith(format) && format !== 'unknown') {
             name = `${name}.${format}`;
@@ -132,11 +238,13 @@ export const extractImagesFromHtml = (html: string, baseUrl: string): ScrapedIma
 
         images.push({
           id: uuidv4(),
-          url: absoluteUrl,
+          url: cleanedUrl,
           alt,
           name: cleanName,
           format: format.toUpperCase(),
           selected: false,
+          sourcePageUrl,
+          sourcePageTitle,
         });
       }
     } catch (e) {
@@ -294,40 +402,72 @@ const fetchAllSitemapUrls = async (
 /**
  * Tries to find a sitemap for a given domain
  */
-const discoverSitemap = async (baseUrl: string): Promise<string | null> => {
+const discoverSitemap = async (
+  baseUrl: string,
+  onDiscoveryProgress?: DiscoveryCallback
+): Promise<string | null> => {
   const urlObj = new URL(baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`);
   const origin = urlObj.origin;
 
-  // Common sitemap locations to try
-  const sitemapLocations = [
-    `${origin}/sitemap.xml`,
-    `${origin}/sitemap_index.xml`,
-    `${origin}/sitemap-index.xml`,
-    `${origin}/sitemaps.xml`,
-    `${origin}/sitemap/sitemap.xml`,
+  // Build list of locations to try with labels
+  const locations: SitemapLocation[] = [
+    { url: `${origin}/sitemap.xml`, label: '/sitemap.xml', status: 'pending' },
+    { url: `${origin}/sitemap_index.xml`, label: '/sitemap_index.xml', status: 'pending' },
+    { url: `${origin}/sitemap-index.xml`, label: '/sitemap-index.xml', status: 'pending' },
+    { url: `${origin}/sitemaps.xml`, label: '/sitemaps.xml', status: 'pending' },
+    { url: `${origin}/sitemap/sitemap.xml`, label: '/sitemap/sitemap.xml', status: 'pending' },
+    { url: `${origin}/robots.txt`, label: 'robots.txt', status: 'pending' },
   ];
 
-  for (const loc of sitemapLocations) {
+  // Helper to update and broadcast progress
+  const updateStatus = (index: number, status: SitemapLocation['status'], foundUrl?: string) => {
+    locations[index].status = status;
+    onDiscoveryProgress?.({
+      phase: 'discovering',
+      locations: [...locations],
+      foundUrl
+    });
+  };
+
+  // Initial broadcast
+  onDiscoveryProgress?.({ phase: 'discovering', locations: [...locations] });
+
+  // Try each sitemap location (except robots.txt which is last)
+  for (let i = 0; i < locations.length - 1; i++) {
+    const loc = locations[i];
+    updateStatus(i, 'checking');
+
     try {
-      const response = await fetchWithFallback(loc, { method: 'HEAD' });
+      const response = await fetchWithFallback(loc.url, { method: 'HEAD' });
       if (response.ok) {
-        return loc;
+        updateStatus(i, 'found', loc.url);
+        // Mark remaining as not checked (they stay pending)
+        return loc.url;
+      } else {
+        updateStatus(i, 'not_found');
       }
     } catch {
-      // Continue to next location
+      updateStatus(i, 'not_found');
     }
   }
 
   // Try robots.txt for sitemap reference
+  const robotsIndex = locations.length - 1;
+  updateStatus(robotsIndex, 'checking');
+
   try {
     const robotsUrl = `${origin}/robots.txt`;
     const robotsText = await fetchHtml(robotsUrl);
     const sitemapMatch = robotsText.match(/Sitemap:\s*(.+)/i);
     if (sitemapMatch && sitemapMatch[1]) {
-      return sitemapMatch[1].trim();
+      const foundUrl = sitemapMatch[1].trim();
+      updateStatus(robotsIndex, 'found', foundUrl);
+      return foundUrl;
+    } else {
+      updateStatus(robotsIndex, 'not_found');
     }
   } catch {
-    // No robots.txt or no sitemap reference
+    updateStatus(robotsIndex, 'not_found');
   }
 
   return null;
@@ -342,12 +482,15 @@ export const processUrlInput = async (
 
   for (const url of urls) {
     try {
+      // Skip blocked paid stock domains
+      if (isBlockedDomain(url)) continue;
+
       // Check if the URL itself is an image
       const ext = getExtension(url);
       if (ext !== 'unknown') {
          allImages.push({
            id: uuidv4(),
-           url: url,
+           url: cleanImageUrl(url),
            alt: 'Direct Link',
            name: url.split('/').pop() || `image.${ext}`,
            format: ext.toUpperCase(),
@@ -361,15 +504,17 @@ export const processUrlInput = async (
       allImages = [...allImages, ...images];
     } catch (error) {
       console.error(`Error scraping ${url}:`, error);
-      // Fallback
-      allImages.push({
-           id: uuidv4(),
-           url: url,
-           alt: 'Potential Image Link',
-           name: url.split('/').pop() || 'link',
-           format: 'UNKNOWN',
-           selected: false
-      });
+      // Fallback - but still check for blocked domains
+      if (!isBlockedDomain(url)) {
+        allImages.push({
+             id: uuidv4(),
+             url: url,
+             alt: 'Potential Image Link',
+             name: url.split('/').pop() || 'link',
+             format: 'UNKNOWN',
+             selected: false
+        });
+      }
     }
   }
 
@@ -378,23 +523,51 @@ export const processUrlInput = async (
 
 export type ImageBatchCallback = (images: ScrapedImage[]) => void;
 
+// Result type for sitemap processing that includes discovery failure info
+export interface ProcessSitemapResult {
+  images: ScrapedImage[];
+  sitemapUrl?: string;
+  discoveryFailed?: boolean;
+  discoveryLocations?: SitemapLocation[];
+}
+
+/**
+ * Strips query params and hash from image URL for cleaner storage
+ */
+const cleanImageUrl = (url: string): string => {
+  try {
+    const urlObj = new URL(url);
+    // Keep the origin and pathname, strip query and hash
+    return urlObj.origin + urlObj.pathname;
+  } catch {
+    // If URL parsing fails, do basic cleaning
+    return url.split('?')[0].split('#')[0];
+  }
+};
+
 /**
  * Process a sitemap URL and crawl all pages for images
+ * Now collects all images first, then deduplicates at the end
  */
 export const processSitemapInput = async (
   input: string,
   onProgress?: ProgressCallback,
   maxPages: number = 100,
-  onImagesBatch?: ImageBatchCallback
-): Promise<ScrapedImage[]> => {
+  onCrawlLog?: CrawlLogCallback,
+  onDiscoveryProgress?: DiscoveryCallback
+): Promise<ProcessSitemapResult> => {
   let sitemapUrl = input.trim();
 
   // If not explicitly a sitemap URL, try to discover it
   if (!isSitemapUrl(sitemapUrl)) {
-    onProgress?.({ phase: 'parsing', current: 0, total: 1, currentUrl: 'Discovering sitemap...' });
-    const discovered = await discoverSitemap(sitemapUrl);
+    const discovered = await discoverSitemap(sitemapUrl, onDiscoveryProgress);
     if (!discovered) {
-      throw new Error('Could not find a sitemap for this URL. Try providing a direct sitemap URL.');
+      // Return with discovery failure info instead of throwing
+      return {
+        images: [],
+        discoveryFailed: true,
+        discoveryLocations: onDiscoveryProgress ? undefined : undefined
+      };
     }
     sitemapUrl = discovered;
   }
@@ -403,56 +576,67 @@ export const processSitemapInput = async (
   onProgress?.({ phase: 'parsing', current: 0, total: 1, currentUrl: sitemapUrl });
   const { pageUrls, imageUrls } = await fetchAllSitemapUrls(sitemapUrl, onProgress);
 
+  // Collect ALL images first (will dedupe at the end)
   let allImages: ScrapedImage[] = [];
-  const seenUrls = new Set<string>(); // Stores normalized URLs for deduplication
 
   // First, add all images found directly in the sitemap (image:loc entries)
   if (imageUrls.length > 0) {
     onProgress?.({ phase: 'extracting', current: 0, total: imageUrls.length, currentUrl: 'Processing sitemap images...' });
-    const batchImages: ScrapedImage[] = [];
     for (let i = 0; i < imageUrls.length; i++) {
       const imgUrl = imageUrls[i];
-      const normalizedUrl = normalizeUrlForDedup(imgUrl);
-      if (!seenUrls.has(normalizedUrl)) {
-        seenUrls.add(normalizedUrl);
-        const ext = getExtension(imgUrl);
-        const name = imgUrl.split('/').pop()?.split('?')[0] || `image.${ext}`;
-        const newImage: ScrapedImage = {
-          id: uuidv4(),
-          url: imgUrl,
-          alt: 'Sitemap Image',
-          name: name.length > 30 ? name.substring(0, 30) + '...' : name,
-          format: ext !== 'unknown' ? ext.toUpperCase() : 'JPG',
-          selected: false
-        };
-        allImages.push(newImage);
-        batchImages.push(newImage);
-      }
+
+      // Skip blocked paid stock domains
+      if (isBlockedDomain(imgUrl)) continue;
+
+      const cleanedUrl = cleanImageUrl(imgUrl);
+      const ext = getExtension(cleanedUrl);
+      const name = cleanedUrl.split('/').pop() || `image.${ext}`;
+      const newImage: ScrapedImage = {
+        id: uuidv4(),
+        url: cleanedUrl,
+        alt: 'Sitemap Image',
+        name: name.length > 30 ? name.substring(0, 30) + '...' : name,
+        format: ext !== 'unknown' ? ext.toUpperCase() : 'JPG',
+        selected: false,
+        sourcePageUrl: sitemapUrl,
+        sourcePageTitle: 'Sitemap'
+      };
+      allImages.push(newImage);
       if (i % 10 === 0 || i === imageUrls.length - 1) {
         onProgress?.({ phase: 'extracting', current: i + 1, total: imageUrls.length, currentUrl: imgUrl });
       }
     }
-    // Stream the sitemap images immediately
-    if (batchImages.length > 0 && onImagesBatch) {
-      onImagesBatch(batchImages);
-    }
   }
 
-  // If we have no page URLs to crawl, just return the images from sitemap
-  if (pageUrls.length === 0 && allImages.length > 0) {
-    return allImages;
-  }
-
+  // If we have no page URLs to crawl and no images, sitemap was empty
   if (pageUrls.length === 0 && allImages.length === 0) {
-    throw new Error('No URLs found in the sitemap.');
+    return { images: [], sitemapUrl, discoveryFailed: false };
+  }
+
+  // If we have sitemap images but no page URLs, skip crawling and go to dedup
+  if (pageUrls.length === 0 && allImages.length > 0) {
+    onProgress?.({ phase: 'done', current: allImages.length, total: allImages.length });
+    return { images: allImages, sitemapUrl };
   }
 
   // Limit pages to crawl
   const urlsToCrawl = pageUrls.slice(0, maxPages);
 
-  // Crawl each page
+  // Initialize crawl log with all pages as pending
+  const crawlLog: CrawlLogEntry[] = urlsToCrawl.map(url => ({
+    url,
+    imageCount: 0,
+    status: 'pending' as const
+  }));
+  onCrawlLog?.(crawlLog);
+
+  // Crawl each page with try/catch for each
   for (let i = 0; i < urlsToCrawl.length; i++) {
     const pageUrl = urlsToCrawl[i];
+
+    // Update crawl log to show this page is being crawled
+    crawlLog[i].status = 'crawling';
+    onCrawlLog?.([...crawlLog]);
 
     onProgress?.({
       phase: 'crawling',
@@ -462,70 +646,71 @@ export const processSitemapInput = async (
     });
 
     try {
-      const newImages: ScrapedImage[] = [];
+      let pageImageCount = 0;
 
       // Check if it's a direct image URL
       const ext = getExtension(pageUrl);
       if (ext !== 'unknown') {
-        const normalizedUrl = normalizeUrlForDedup(pageUrl);
-        if (!seenUrls.has(normalizedUrl)) {
-          seenUrls.add(normalizedUrl);
+        // Skip blocked paid stock domains
+        if (!isBlockedDomain(pageUrl)) {
+          const cleanedUrl = cleanImageUrl(pageUrl);
           const newImage: ScrapedImage = {
             id: uuidv4(),
-            url: pageUrl,
+            url: cleanedUrl,
             alt: 'Sitemap Image',
-            name: pageUrl.split('/').pop() || `image.${ext}`,
+            name: cleanedUrl.split('/').pop() || `image.${ext}`,
             format: ext.toUpperCase(),
-            selected: false
+            selected: false,
+            sourcePageUrl: pageUrl,
+            sourcePageTitle: 'Direct Image'
           };
           allImages.push(newImage);
-          newImages.push(newImage);
+          pageImageCount = 1;
         }
       } else {
         // Fetch and extract images from the page
         const html = await fetchHtml(pageUrl);
-        const images = extractImagesFromHtml(html, pageUrl);
+        const images = extractImagesFromHtml(html, pageUrl, pageUrl);
 
-        // Deduplicate and collect new images
-        console.log(`[DEDUP] Processing ${images.length} images from ${pageUrl}`);
-        for (const img of images) {
-          const normalizedUrl = normalizeUrlForDedup(img.url);
-          const isDuplicate = seenUrls.has(normalizedUrl);
-          console.log(`[DEDUP] ${isDuplicate ? 'SKIP (duplicate)' : 'ADD'}: ${img.name}`);
-          if (!isDuplicate) {
-            seenUrls.add(normalizedUrl);
-            allImages.push(img);
-            newImages.push(img);
-          }
-        }
-        console.log(`[DEDUP] Total seen URLs: ${seenUrls.size}, Total images: ${allImages.length}`);
+        // Collect images (URLs already cleaned by extractImagesFromHtml)
+        allImages.push(...images);
+        pageImageCount = images.length;
       }
 
-      // Stream new images to UI as they're found
-      if (newImages.length > 0 && onImagesBatch) {
-        onImagesBatch(newImages);
-      }
+      // Update crawl log with success
+      crawlLog[i].status = 'done';
+      crawlLog[i].imageCount = pageImageCount;
+      onCrawlLog?.([...crawlLog]);
     } catch (error) {
       console.warn(`Failed to crawl ${pageUrl}:`, error);
+      // Update crawl log with error
+      crawlLog[i].status = 'error';
+      onCrawlLog?.([...crawlLog]);
     }
   }
 
-  return allImages;
-};
+  // Flag duplicates instead of removing them
+  onProgress?.({ phase: 'deduplicating', current: 0, total: allImages.length, currentUrl: 'Flagging duplicates...' });
 
-/**
- * Normalizes a URL for deduplication (removes protocol, query params, hash, trailing slashes)
- */
-const normalizeUrlForDedup = (url: string): string => {
-  const normalized = url
-    .replace(/^https?:\/\//, '')
-    .split('?')[0]
-    .split('#')[0]
-    .replace(/\/+$/, '')
-    .toLowerCase();
-  console.log(`[DEDUP] Original: ${url}`);
-  console.log(`[DEDUP] Normalized: ${normalized}`);
-  return normalized;
+  const seenUrls = new Set<string>();
+  let duplicateCount = 0;
+
+  for (const img of allImages) {
+    // URLs are already cleaned (no query params/hash), just compare exactly
+    if (seenUrls.has(img.url)) {
+      img.isDuplicate = true;
+      duplicateCount++;
+    } else {
+      seenUrls.add(img.url);
+      img.isDuplicate = false;
+    }
+  }
+
+  console.log(`[DEDUP] Flagged ${duplicateCount} duplicates. Total images: ${allImages.length}`);
+
+  onProgress?.({ phase: 'done', current: allImages.length, total: allImages.length });
+
+  return { images: allImages, sitemapUrl };
 };
 
 export const urlToFile = async (url: string, filename: string): Promise<File> => {

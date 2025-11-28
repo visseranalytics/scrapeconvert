@@ -31,6 +31,7 @@ const ConverterFeature = ({ files, setFiles }: ConverterFeatureProps) => {
     maxWidth: null,
     maxHeight: null,
     maintainAspectRatio: true,
+    keepSmaller: true,
   });
   const [isZipping, setIsZipping] = useState(false);
 
@@ -38,7 +39,8 @@ const ConverterFeature = ({ files, setFiles }: ConverterFeatureProps) => {
     async (newFiles: File[]) => {
       const newImageFiles: ImageFile[] = await Promise.all(
         newFiles.map(async (file) => {
-          const previewUrl = await readFileAsDataURL(file);
+          // Use blob URL instead of base64 - much more efficient
+          const previewUrl = URL.createObjectURL(file);
           const { width, height } = await getImageDimensions(previewUrl);
           return {
             id: uuidv4(),
@@ -56,11 +58,19 @@ const ConverterFeature = ({ files, setFiles }: ConverterFeatureProps) => {
   );
 
   const handleRemoveFile = (id: string) => {
-    setFiles((prev) => prev.filter((f) => f.id !== id));
+    setFiles((prev) => {
+      const file = prev.find((f) => f.id === id);
+      if (file) {
+        URL.revokeObjectURL(file.previewUrl);
+        if (file.resultUrl) URL.revokeObjectURL(file.resultUrl);
+      }
+      return prev.filter((f) => f.id !== id);
+    });
   };
 
   const handleClearAll = () => {
     files.forEach((f) => {
+      URL.revokeObjectURL(f.previewUrl);
       if (f.resultUrl) URL.revokeObjectURL(f.resultUrl);
     });
     setFiles([]);
@@ -117,7 +127,7 @@ const ConverterFeature = ({ files, setFiles }: ConverterFeatureProps) => {
             currentSettings.maxWidth,
             currentSettings.maxHeight,
             currentSettings.maintainAspectRatio,
-            item.file
+            currentSettings.keepSmaller ? item.file : undefined
           );
           const resultUrl = URL.createObjectURL(result.blob);
           return {

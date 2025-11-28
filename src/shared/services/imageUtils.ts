@@ -1,4 +1,8 @@
 import { ConversionFormat } from '../types';
+import { encode as encodeJpeg } from '@jsquash/jpeg';
+import { encode as encodePng } from '@jsquash/png';
+import { encode as encodeWebp } from '@jsquash/webp';
+import { optimise as optimizePng } from '@jsquash/oxipng';
 
 export interface ConversionResult {
   blob: Blob;
@@ -23,6 +27,33 @@ export const getImageDimensions = (url: string): Promise<{ width: number; height
   });
 };
 
+/**
+ * Get ImageData from a canvas - used by jSquash encoders
+ */
+const getImageData = (
+  img: HTMLImageElement,
+  width: number,
+  height: number,
+  fillWhite: boolean
+): ImageData => {
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext('2d')!;
+
+  if (fillWhite) {
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(0, 0, width, height);
+  }
+
+  ctx.drawImage(img, 0, 0, width, height);
+  return ctx.getImageData(0, 0, width, height);
+};
+
+/**
+ * Convert image using jSquash WASM codecs for superior compression
+ * Uses MozJPEG, OxiPNG, and libwebp - same as Squoosh
+ */
 export const convertImage = async (
   sourceUrl: string,
   format: ConversionFormat,
@@ -36,59 +67,69 @@ export const convertImage = async (
     const img = new Image();
     img.crossOrigin = 'Anonymous';
 
-    img.onload = () => {
-      let width = img.width;
-      let height = img.height;
+    img.onload = async () => {
+      try {
+        let width = img.width;
+        let height = img.height;
 
-      // Only apply resizing if max dimensions are specified
-      const effectiveMaxWidth = maxWidth || width;
-      const effectiveMaxHeight = maxHeight || height;
+        // Only apply resizing if max dimensions are specified
+        const effectiveMaxWidth = maxWidth || width;
+        const effectiveMaxHeight = maxHeight || height;
 
-      if (maintainAspectRatio) {
-        const ratio = Math.min(effectiveMaxWidth / width, effectiveMaxHeight / height);
-        if (ratio < 1) {
-          width = Math.round(width * ratio);
-          height = Math.round(height * ratio);
-        }
-      } else {
-        width = Math.min(width, effectiveMaxWidth);
-        height = Math.min(height, effectiveMaxHeight);
-      }
-
-      const canvas = document.createElement('canvas');
-      canvas.width = width;
-      canvas.height = height;
-      const ctx = canvas.getContext('2d');
-
-      if (!ctx) {
-        reject(new Error('Could not get canvas context'));
-        return;
-      }
-
-      if (format === ConversionFormat.JPEG) {
-        ctx.fillStyle = '#FFFFFF';
-        ctx.fillRect(0, 0, width, height);
-      }
-
-      ctx.drawImage(img, 0, 0, width, height);
-
-      canvas.toBlob(
-        (blob) => {
-          if (blob) {
-            // If original file provided and converted is larger, keep original
-            if (originalFile && blob.size > originalFile.size) {
-              resolve({ blob: originalFile, keptOriginal: true });
-            } else {
-              resolve({ blob, keptOriginal: false });
-            }
-          } else {
-            reject(new Error('Canvas to Blob failed. Possible CORS issue if image source is remote.'));
+        if (maintainAspectRatio) {
+          const ratio = Math.min(effectiveMaxWidth / width, effectiveMaxHeight / height);
+          if (ratio < 1) {
+            width = Math.round(width * ratio);
+            height = Math.round(height * ratio);
           }
-        },
-        format,
-        quality / 100
-      );
+        } else {
+          width = Math.min(width, effectiveMaxWidth);
+          height = Math.min(height, effectiveMaxHeight);
+        }
+
+        // Get ImageData for jSquash encoders
+        const fillWhite = format === ConversionFormat.JPEG;
+        const imageData = getImageData(img, width, height, fillWhite);
+
+        let outputBuffer: ArrayBuffer;
+
+        // Use jSquash WASM encoders for superior compression
+        switch (format) {
+          case ConversionFormat.JPEG:
+            // MozJPEG encoder - much better than browser's JPEG
+            outputBuffer = await encodeJpeg(imageData, { quality });
+            break;
+
+          case ConversionFormat.PNG:
+            // First encode to PNG, then optimize with OxiPNG
+            const pngBuffer = await encodePng(imageData);
+            // OxiPNG optimization level 2 is a good balance of speed/compression
+            outputBuffer = await optimizePng(pngBuffer, { level: 2 });
+            break;
+
+          case ConversionFormat.WEBP:
+            // libwebp encoder
+            outputBuffer = await encodeWebp(imageData, { quality });
+            break;
+
+          default:
+            throw new Error(`Unsupported format: ${format}`);
+        }
+
+        const blob = new Blob([outputBuffer], { type: format });
+
+        // If original file provided and converted is larger, keep original
+        if (originalFile && blob.size > originalFile.size) {
+          resolve({ blob: originalFile, keptOriginal: true });
+        } else {
+          resolve({ blob, keptOriginal: false });
+        }
+      } catch (error) {
+        console.error('jSquash conversion error:', error);
+        reject(new Error('Image conversion failed'));
+      }
     };
+
     img.onerror = () => reject(new Error('Failed to load image for conversion'));
     img.src = sourceUrl;
   });

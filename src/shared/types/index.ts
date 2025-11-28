@@ -28,6 +28,9 @@ export interface ScrapedImage {
   height?: number;
   size?: number;
   selected: boolean;
+  sourcePageUrl?: string;
+  sourcePageTitle?: string;
+  isDuplicate?: boolean;
 }
 
 export interface ConversionSettings {
@@ -36,4 +39,5 @@ export interface ConversionSettings {
   maxWidth: number;
   maxHeight: number;
   maintainAspectRatio: boolean;
+  keepSmaller: boolean;
 }
