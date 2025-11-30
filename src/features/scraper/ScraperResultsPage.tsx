@@ -290,7 +290,8 @@ const ScraperResultsPage = () => {
     hideDuplicates,
   ]);
 
-  const selectedCount = scrapedImages.filter((img) => img.selected).length;
+  // Count only from filtered images to respect all active filters
+  const selectedCount = filteredImages.filter((img) => img.selected).length;
 
   const toggleSelection = (id: string) => {
     setScrapedImages((prev) =>
@@ -382,7 +383,8 @@ const ScraperResultsPage = () => {
   };
 
   const handleCopyUrls = () => {
-    const urls = scrapedImages
+    // Use filteredImages to respect all active filters
+    const urls = filteredImages
       .filter((img) => img.selected)
       .map((img) => img.url)
       .join("\n");
@@ -391,7 +393,8 @@ const ScraperResultsPage = () => {
   };
 
   const handleProcess = async () => {
-    const selected = scrapedImages.filter((img) => img.selected);
+    // Use filteredImages to respect all active filters (duplicates, search, format, pages)
+    const selected = filteredImages.filter((img) => img.selected);
     if (selected.length === 0) return;
 
     setIsProcessing(true);
