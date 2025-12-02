@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ScrapeConvert Image Grabber</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>ScrapeConvert</h1>
+      <p class="subtitle">Image Grabber</p>
+    </header>
+
+    <div id="loading" class="loading hidden">
+      <div class="spinner"></div>
+      <p>Scanning page for images...</p>
+    </div>
+
+    <div id="main-content">
+      <div class="stats-bar">
+        <span id="image-count">0 images found</span>
+        <button id="refresh-btn" class="icon-btn" title="Rescan page">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="settings-section">
+        <h2>Conversion Settings</h2>
+
+        <div class="setting-row">
+          <label for="format-select">Output Format</label>
+          <select id="format-select">
+            <option value="original">Keep Original</option>
+            <option value="image/jpeg">JPEG</option>
+            <option value="image/png">PNG</option>
+            <option value="image/webp" selected>WebP</option>
+          </select>
+        </div>
+
+        <div class="setting-row" id="quality-row">
+          <label for="quality-slider">Quality: <span id="quality-value">80</span>%</label>
+          <input type="range" id="quality-slider" min="10" max="100" value="80">
+        </div>
+
+        <div class="setting-row">
+          <label for="min-size">Min Size (px)</label>
+          <input type="number" id="min-size" value="100" min="0" max="10000">
+        </div>
+
+        <div class="preset-buttons">
+          <button class="preset-btn" data-preset="web">Web</button>
+          <button class="preset-btn active" data-preset="balanced">Balanced</button>
+          <button class="preset-btn" data-preset="quality">Quality</button>
+        </div>
+      </div>
+
+      <div class="images-section">
+        <div class="images-header">
+          <h2>Found Images</h2>
+          <div class="selection-controls">
+            <button id="select-all-btn" class="text-btn">Select All</button>
+            <button id="deselect-all-btn" class="text-btn">Deselect All</button>
+          </div>
+        </div>
+
+        <div id="images-grid" class="images-grid">
+          <p class="empty-state">No images found on this page</p>
+        </div>
+      </div>
+
+      <div class="actions-section">
+        <div class="selected-info">
+          <span id="selected-count">0 selected</span>
+        </div>
+        <div class="action-buttons">
+          <button id="copy-btn" class="secondary-btn" disabled title="Copy image URLs to clipboard">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+              <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"></path>
+            </svg>
+            Copy URLs
+          </button>
+          <button id="download-btn" class="primary-btn" disabled>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+            </svg>
+            Download
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div id="progress-overlay" class="progress-overlay hidden">
+      <div class="progress-content">
+        <h3>Downloading Images</h3>
+        <div class="progress-bar">
+          <div id="progress-fill" class="progress-fill"></div>
+        </div>
+        <p id="progress-text">0 / 0</p>
+        <button id="cancel-btn" class="secondary-btn">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="src/popup.js" type="module"></script>
+</body>
+</html>
