@@ -67,7 +67,7 @@ const Footer = () => {
         {/* Bottom Bar */}
         <div className="border-t border-white/5 mt-8 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-slate-500 text-sm">
-            &copy; {new Date().getFullYear()} ScrapeConvert. All rights reserved.
+            &copy; 2026 ScrapeConvert. All rights reserved.
           </p>
           <p className="text-slate-500 text-sm">
             Powered by{" "}
