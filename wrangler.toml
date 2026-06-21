@@ -12,7 +12,7 @@ compatibility_flags = []
 # the PUBLIC_ prefix exposes it to client code. SECRETS (SESSION_HMAC_SECRET,
 # TURNSTILE_SECRET_KEY) are NOT here; set them with `wrangler secret put <NAME>`.
 [vars]
-PUBLIC_TURNSTILE_SITE_KEY = "1x00000000000000000000AA"   # Cloudflare always-passes test site key; override per env
+PUBLIC_TURNSTILE_SITE_KEY = "0x4AAAAAADor4tR5smJd7Zil"   # production Turnstile site key (public; baked into the client island)
 SESSION_TOKEN_TTL_SECONDS = "2700"                  # 45 min session token TTL (spec ##17)
 MAX_HTML_BYTES = "5242880"                          # 5 MB HTML/sitemap cap
 MAX_IMAGE_BYTES = "26214400"                        # 25 MB image cap
@@ -29,7 +29,13 @@ MINT_RATE_PER_IP_PER_MIN = "10"                     # /api/turnstile mint cap pe
 # Per-token / per-host budget counters + Turnstile dup-token set live in KV.
 [[kv_namespaces]]
 binding = "BUDGETS"
-id = "PLACEHOLDER_REPLACE_WITH_REAL_KV_ID"
+id = "84b6200a012445a1bb628206cef38f0c"
+
+# Astro sessions KV (auto-bound by @astrojs/cloudflare; we do not use sessions
+# ourselves but the binding must resolve for deploy).
+[[kv_namespaces]]
+binding = "SESSION"
+id = "54269b02d51942758a2d71ddb712720b"
 
 # Rate-limit binding PLACEHOLDER (modern top-level [[ratelimits]] shape).
 # Phase 1 keys this on the session token (NOT IP); it is a per-colo,
@@ -38,3 +44,21 @@ id = "PLACEHOLDER_REPLACE_WITH_REAL_KV_ID"
 name = "RATE_LIMITER"
 namespace_id = "1001"
 simple = { limit = 60, period = 60 }
+
+# Production custom domains. custom_domain=true makes wrangler provision the
+# proxied DNS record + edge certificate for each host and route it to this Worker.
+# www is also redirected to the apex by a zone-level Redirect Rule (authoritative,
+# covers static assets) + src/middleware.ts (SSR routes); see docs/runbooks/cutover.md.
+[[routes]]
+pattern = "scrapeconvert.com"
+custom_domain = true
+
+[[routes]]
+pattern = "www.scrapeconvert.com"
+custom_domain = true
+
+# Workers observability — runtime + invocation logs (Cloudflare dashboard "Logs"
+# tab + `wrangler tail`). Carried into dist/server/wrangler.json by the adapter.
+[observability.logs]
+enabled = true
+invocation_logs = true

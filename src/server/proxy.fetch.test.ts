@@ -1,16 +1,25 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { pinnedFetch, __setHooks, __resetHooks } from './proxy';
 
-// Build a fake upstream HTTP/1.1 raw response as a ReadableStream of bytes.
-function rawHttp(statusLine: string, headers: Record<string, string>, body: Uint8Array): ReadableStream<Uint8Array> {
-  const enc = new TextEncoder();
-  const head = statusLine + '\r\n' + Object.entries(headers).map(([k, v]) => `${k}: ${v}`).join('\r\n') + '\r\n\r\n';
-  const chunks = [enc.encode(head), body];
-  let i = 0;
-  return new ReadableStream({
+const PUBLIC_IP = { ok: true as const, ips: ['93.184.216.34'] };
+
+// Build a fake upstream Response. redirect/error statuses use a null body.
+function upstream(status: number, headers: Record<string, string>, body: BodyInit | null = null): Response {
+  return new Response(body, { status, headers });
+}
+
+// 6MB body (> 5MB page cap), no reliable content-length.
+function bigBody(): ReadableStream<Uint8Array> {
+  const big = new Uint8Array(6 * 1024 * 1024);
+  let sent = false;
+  return new ReadableStream<Uint8Array>({
     pull(c) {
-      if (i < chunks.length) c.enqueue(chunks[i++]);
-      else c.close();
+      if (!sent) {
+        c.enqueue(big);
+        sent = true;
+      } else {
+        c.close();
+      }
     },
   });
 }
@@ -18,65 +27,66 @@ function rawHttp(statusLine: string, headers: Record<string, string>, body: Uint
 beforeEach(() => __resetHooks());
 
 describe('pinnedFetch — happy path page', () => {
-  it('returns 200 text body, pinned to validated IP', async () => {
-    let sentRequest = '';
-    let pinnedIp = '';
-    let usedTls = false;
+  it('returns 200 text body and resolves the host first', async () => {
+    let fetchedUrl = '';
+    let sentHeaders: Record<string, string> = {};
+    let resolvedHost = '';
     __setHooks({
-      resolve: async () => ({ ok: true, ips: ['93.184.216.34'] }),
-      connect: async ({ ip, secure, rawRequest }) => {
-        sentRequest = rawRequest;
-        pinnedIp = ip;
-        usedTls = secure;
-        return rawHttp('HTTP/1.1 200 OK', { 'content-type': 'text/html; charset=utf-8', 'content-length': '11' }, new TextEncoder().encode('<html></h>'));
+      resolve: async (h) => {
+        resolvedHost = h;
+        return PUBLIC_IP;
+      },
+      fetch: async (url, headers) => {
+        fetchedUrl = url.href;
+        sentHeaders = headers;
+        return upstream(200, { 'content-type': 'text/html; charset=utf-8' }, '<html></html>');
       },
     });
     const res = await pinnedFetch(new URL('https://example.com/'), { type: 'page' });
     expect(res.status).toBe(200);
     expect(res.headers.get('content-type')?.startsWith('text/')).toBe(true);
-    expect(pinnedIp).toBe('93.184.216.34'); // connected to the validated literal IP, not the hostname
-    expect(usedTls).toBe(true); // https target -> TLS enabled
-    expect(sentRequest).toContain('Host: example.com');
-    expect(sentRequest).not.toMatch(/cookie/i);
-    expect(sentRequest).not.toMatch(/authorization/i);
-    const text = await res.text();
-    expect(text).toContain('<html>');
+    expect(resolvedHost).toBe('example.com'); // host validated before the relay
+    expect(fetchedUrl).toBe('https://example.com/');
+    const keys = Object.keys(sentHeaders).map((k) => k.toLowerCase());
+    expect(keys).not.toContain('cookie');
+    expect(keys).not.toContain('authorization');
+    expect(await res.text()).toContain('<html>');
   });
 });
 
 describe('pinnedFetch — request header hygiene', () => {
   it('only sends User-Agent, Accept, Accept-Encoding: identity', async () => {
-    let req = '';
+    let sent: Record<string, string> = {};
     __setHooks({
-      resolve: async () => ({ ok: true, ips: ['93.184.216.34'] }),
-      connect: async ({ rawRequest }) => {
-        req = rawRequest;
-        return rawHttp('HTTP/1.1 200 OK', { 'content-type': 'text/plain' }, new Uint8Array());
+      resolve: async () => PUBLIC_IP,
+      fetch: async (_url, headers) => {
+        sent = headers;
+        return upstream(200, { 'content-type': 'text/plain' });
       },
     });
     await pinnedFetch(new URL('https://example.com/'), { type: 'page' });
-    expect(req).toMatch(/Accept-Encoding: identity/i);
-    expect(req).not.toMatch(/X-Forwarded-For/i);
-    expect(req).not.toMatch(/CF-/i);
-    expect(req).not.toMatch(/Referer/i);
+    const lc: Record<string, string> = {};
+    for (const [k, v] of Object.entries(sent)) lc[k.toLowerCase()] = v;
+    expect(lc['accept-encoding']).toMatch(/identity/i);
+    expect(lc['x-forwarded-for']).toBeUndefined();
+    expect(lc['referer']).toBeUndefined();
+    expect(Object.keys(lc).some((k) => k.startsWith('cf-'))).toBe(false);
   });
 });
 
 describe('pinnedFetch — manual redirects', () => {
   it('follows a redirect to a public host and re-validates', async () => {
     const calls: string[] = [];
+    let hop = 0;
     __setHooks({
       resolve: async (h) => {
         calls.push('resolve:' + h);
-        return { ok: true, ips: ['93.184.216.34'] };
+        return PUBLIC_IP;
       },
-      connect: async () => {
-        if (calls.filter((c) => c.startsWith('connect')).length === 0) {
-          calls.push('connect:1');
-          return rawHttp('HTTP/1.1 301 Moved', { location: 'https://example.org/final' }, new Uint8Array());
-        }
-        calls.push('connect:2');
-        return rawHttp('HTTP/1.1 200 OK', { 'content-type': 'text/html' }, new TextEncoder().encode('ok'));
+      fetch: async () => {
+        hop++;
+        if (hop === 1) return upstream(301, { location: 'https://example.org/final' });
+        return upstream(200, { 'content-type': 'text/html' }, 'ok');
       },
     });
     const res = await pinnedFetch(new URL('https://example.com/'), { type: 'page' });
@@ -87,11 +97,11 @@ describe('pinnedFetch — manual redirects', () => {
   it('rejects a redirect to a private host (late-hop rebind)', async () => {
     let hop = 0;
     __setHooks({
-      resolve: async (h) => (h === 'internal.test' ? { ok: false, reason: 'private-ip' } : { ok: true, ips: ['93.184.216.34'] }),
-      connect: async () => {
+      resolve: async (h) => (h === 'internal.test' ? { ok: false, reason: 'private-ip' } : PUBLIC_IP),
+      fetch: async () => {
         hop++;
-        if (hop === 1) return rawHttp('HTTP/1.1 302 Found', { location: 'http://internal.test/' }, new Uint8Array());
-        return rawHttp('HTTP/1.1 200 OK', { 'content-type': 'text/html' }, new Uint8Array());
+        if (hop === 1) return upstream(302, { location: 'http://internal.test/' });
+        return upstream(200, { 'content-type': 'text/html' });
       },
     });
     await expect(pinnedFetch(new URL('https://example.com/'), { type: 'page' })).rejects.toMatchObject({ status: 400 });
@@ -99,92 +109,72 @@ describe('pinnedFetch — manual redirects', () => {
 
   it('rejects a redirect to a non-http scheme', async () => {
     __setHooks({
-      resolve: async () => ({ ok: true, ips: ['93.184.216.34'] }),
-      connect: async () => rawHttp('HTTP/1.1 302 Found', { location: 'file:///etc/passwd' }, new Uint8Array()),
+      resolve: async () => PUBLIC_IP,
+      fetch: async () => upstream(302, { location: 'file:///etc/passwd' }),
     });
     await expect(pinnedFetch(new URL('https://example.com/'), { type: 'page' })).rejects.toMatchObject({ status: 400 });
   });
 
   it('rejects on too many hops', async () => {
     __setHooks({
-      resolve: async () => ({ ok: true, ips: ['93.184.216.34'] }),
-      connect: async () => rawHttp('HTTP/1.1 301 Moved', { location: 'https://example.com/loop' }, new Uint8Array()),
+      resolve: async () => PUBLIC_IP,
+      fetch: async () => upstream(301, { location: 'https://example.com/loop' }),
     });
     await expect(pinnedFetch(new URL('https://example.com/'), { type: 'page' })).rejects.toMatchObject({ status: 502 });
   });
 });
 
 describe('pinnedFetch — stream-and-count cap', () => {
-  it('aborts chunked body with no content-length once over cap (page 5MB)', async () => {
+  it('aborts a body that exceeds the page cap (no content-length)', async () => {
     __setHooks({
-      resolve: async () => ({ ok: true, ips: ['93.184.216.34'] }),
-      connect: async () => {
-        const enc = new TextEncoder();
-        const head = 'HTTP/1.1 200 OK\r\ncontent-type: text/html\r\ntransfer-encoding: chunked\r\n\r\n';
-        const big = new Uint8Array(6 * 1024 * 1024); // 6MB > 5MB cap, no content-length
-        let sent = false;
-        return new ReadableStream<Uint8Array>({
-          pull(c) {
-            if (!sent) {
-              c.enqueue(enc.encode(head));
-              sent = true;
-              return;
-            }
-            c.enqueue(big);
-            c.close();
-          },
-        });
-      },
+      resolve: async () => PUBLIC_IP,
+      fetch: async () => upstream(200, { 'content-type': 'text/html' }, bigBody()),
     });
-    await expect((async () => {
-      const r = await pinnedFetch(new URL('https://example.com/'), { type: 'page' });
-      await r.text();
-    })()).rejects.toMatchObject({ status: 413 });
+    await expect(
+      (async () => {
+        const r = await pinnedFetch(new URL('https://example.com/'), { type: 'page' });
+        await r.text();
+      })(),
+    ).rejects.toMatchObject({ status: 413 });
   });
 
-  it('aborts on a lying (small) content-length that the body exceeds', async () => {
+  it('aborts even when content-length lies small', async () => {
     __setHooks({
-      resolve: async () => ({ ok: true, ips: ['93.184.216.34'] }),
-      connect: async () => {
-        const enc = new TextEncoder();
-        const head = 'HTTP/1.1 200 OK\r\ncontent-type: text/html\r\ncontent-length: 10\r\n\r\n';
-        const big = new Uint8Array(6 * 1024 * 1024);
-        let sent = false;
-        return new ReadableStream<Uint8Array>({
-          pull(c) {
-            if (!sent) {
-              c.enqueue(enc.encode(head));
-              sent = true;
-              return;
-            }
-            c.enqueue(big);
-            c.close();
-          },
-        });
-      },
+      resolve: async () => PUBLIC_IP,
+      fetch: async () => upstream(200, { 'content-type': 'text/html', 'content-length': '10' }, bigBody()),
     });
-    await expect((async () => {
-      const r = await pinnedFetch(new URL('https://example.com/'), { type: 'page' });
-      await r.text();
-    })()).rejects.toMatchObject({ status: 413 });
+    await expect(
+      (async () => {
+        const r = await pinnedFetch(new URL('https://example.com/'), { type: 'page' });
+        await r.text();
+      })(),
+    ).rejects.toMatchObject({ status: 413 });
   });
 
-  it('rejects a Content-Encoding: gzip body (we requested identity)', async () => {
+  it('rejects a non-identity content-encoding (decompression-bomb guard)', async () => {
     __setHooks({
-      resolve: async () => ({ ok: true, ips: ['93.184.216.34'] }),
-      connect: async () => rawHttp('HTTP/1.1 200 OK', { 'content-type': 'text/html', 'content-encoding': 'gzip' }, new Uint8Array(100)),
+      resolve: async () => PUBLIC_IP,
+      fetch: async () => upstream(200, { 'content-type': 'text/html', 'content-encoding': 'gzip' }, new Uint8Array(100)),
     });
     await expect(pinnedFetch(new URL('https://example.com/'), { type: 'page' })).rejects.toMatchObject({ status: 502 });
   });
 });
 
 describe('pinnedFetch — response sanitize', () => {
-  it('strips Set-Cookie and upstream security headers', async () => {
+  it('emits only our headers (no Set-Cookie / HSTS / CSP passthrough)', async () => {
     __setHooks({
-      resolve: async () => ({ ok: true, ips: ['93.184.216.34'] }),
-      connect: async () => rawHttp('HTTP/1.1 200 OK', {
-        'content-type': 'text/html', 'set-cookie': 'sid=1', 'strict-transport-security': 'max-age=1', 'content-security-policy': 'default-src *',
-      }, new TextEncoder().encode('ok')),
+      resolve: async () => PUBLIC_IP,
+      fetch: async () =>
+        upstream(
+          200,
+          {
+            'content-type': 'text/html',
+            'set-cookie': 'sid=1',
+            'strict-transport-security': 'max-age=1',
+            'content-security-policy': 'default-src *',
+          },
+          'ok',
+        ),
     });
     const res = await pinnedFetch(new URL('https://example.com/'), { type: 'page' });
     expect(res.headers.get('set-cookie')).toBeNull();
@@ -194,8 +184,8 @@ describe('pinnedFetch — response sanitize', () => {
 
   it('serves type=image with sanitized image/*, attachment, nosniff', async () => {
     __setHooks({
-      resolve: async () => ({ ok: true, ips: ['93.184.216.34'] }),
-      connect: async () => rawHttp('HTTP/1.1 200 OK', { 'content-type': 'image/png' }, new Uint8Array([137, 80, 78, 71])),
+      resolve: async () => PUBLIC_IP,
+      fetch: async () => upstream(200, { 'content-type': 'image/png' }, new Uint8Array([137, 80, 78, 71])),
     });
     const res = await pinnedFetch(new URL('https://cdn.example.com/a.png'), { type: 'image' });
     expect(res.headers.get('content-type')).toBe('image/png');
@@ -205,16 +195,16 @@ describe('pinnedFetch — response sanitize', () => {
 
   it('refuses to relay text/html as type=image', async () => {
     __setHooks({
-      resolve: async () => ({ ok: true, ips: ['93.184.216.34'] }),
-      connect: async () => rawHttp('HTTP/1.1 200 OK', { 'content-type': 'text/html' }, new TextEncoder().encode('<html>')),
+      resolve: async () => PUBLIC_IP,
+      fetch: async () => upstream(200, { 'content-type': 'text/html' }, '<html>'),
     });
     await expect(pinnedFetch(new URL('https://cdn.example.com/x'), { type: 'image' })).rejects.toMatchObject({ status: 502 });
   });
 
   it('refuses to relay image bytes as type=page (content-type mismatch)', async () => {
     __setHooks({
-      resolve: async () => ({ ok: true, ips: ['93.184.216.34'] }),
-      connect: async () => rawHttp('HTTP/1.1 200 OK', { 'content-type': 'image/png' }, new Uint8Array([1, 2])),
+      resolve: async () => PUBLIC_IP,
+      fetch: async () => upstream(200, { 'content-type': 'image/png' }, new Uint8Array([1, 2])),
     });
     await expect(pinnedFetch(new URL('https://example.com/'), { type: 'page' })).rejects.toMatchObject({ status: 502 });
   });

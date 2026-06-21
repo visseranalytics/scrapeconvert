@@ -1,9 +1,39 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { createCrawl, type CrawlState, type CrawlMode, type CrawlDeps } from '../../lib/scrape/crawl';
 import { mintSession, getSessionToken } from '../../lib/session';
 import { fetchViaProxy } from '../../lib/proxy-client';
 import { saveWorkbench, DEFAULT_CONVERT_OPTIONS } from '../../lib/workbench-store';
 import { AppTopBar } from './shared/AppTopBar';
+
+interface TurnstileApi {
+  render: (el: HTMLElement, opts: Record<string, unknown>) => string;
+  reset: (id?: string) => void;
+  remove: (id?: string) => void;
+}
+declare global {
+  interface Window {
+    turnstile?: TurnstileApi;
+  }
+}
+
+// Load the Cloudflare Turnstile script once (explicit-render mode). Resolves
+// immediately if it — or a test stub — is already present on window.
+let turnstileLoad: Promise<void> | null = null;
+function loadTurnstile(): Promise<void> {
+  if (typeof window === 'undefined') return Promise.resolve();
+  if (window.turnstile) return Promise.resolve();
+  if (turnstileLoad) return turnstileLoad;
+  turnstileLoad = new Promise<void>((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
+    s.async = true;
+    s.defer = true;
+    s.onload = () => resolve();
+    s.onerror = () => reject(new Error('turnstile-script-failed'));
+    document.head.appendChild(s);
+  });
+  return turnstileLoad;
+}
 
 const defaultDeps: CrawlDeps = {
   fetchPage: async (url) => (await fetchViaProxy(url, 'page')).text(),
@@ -14,6 +44,9 @@ interface Props {
   deps?: CrawlDeps;
   initialHasSession?: boolean;
   onMint?: (turnstileToken: string) => Promise<string>;
+  /** Turnstile site key, injected from the Worker runtime env via scraper.astro.
+   *  When absent (tests / misconfig) a plain verify button is shown instead. */
+  siteKey?: string;
 }
 
 const MODES: { id: CrawlMode; label: string }[] = [
@@ -22,7 +55,7 @@ const MODES: { id: CrawlMode; label: string }[] = [
   { id: 'sitemap', label: 'Sitemap crawl' },
 ];
 
-export function ScraperInput({ deps = defaultDeps, initialHasSession, onMint = mintSession }: Props) {
+export function ScraperInput({ deps = defaultDeps, initialHasSession, onMint = mintSession, siteKey }: Props) {
   const [mode, setMode] = useState<CrawlMode>('single');
   const [input, setInput] = useState('');
   const [maxPages, setMaxPages] = useState(100);
@@ -30,19 +63,65 @@ export function ScraperInput({ deps = defaultDeps, initialHasSession, onMint = m
     initialHasSession ?? (typeof window !== 'undefined' && !!getSessionToken()),
   );
   const [verifying, setVerifying] = useState(false);
+  const [verifyError, setVerifyError] = useState<string | null>(null);
   const [crawl, setCrawl] = useState<CrawlState | null>(null);
   const [running, setRunning] = useState(false);
   const ctrl = useRef<ReturnType<typeof createCrawl> | null>(null);
+  const widgetHostRef = useRef<HTMLDivElement | null>(null);
+  const widgetIdRef = useRef<string | null>(null);
 
-  async function verify() {
+  // Exchange a Turnstile token for a session token, then unlock the crawl.
+  async function completeMint(token: string) {
     setVerifying(true);
+    setVerifyError(null);
     try {
-      await onMint('turnstile-token-placeholder');
+      await onMint(token);
       setHasSession(true);
+    } catch {
+      setVerifyError('Verification failed — please try again.');
     } finally {
       setVerifying(false);
     }
   }
+  // Point the widget callback at the latest closure without re-rendering the
+  // widget on every keystroke.
+  const mintRef = useRef(completeMint);
+  mintRef.current = completeMint;
+
+  // Render the real Turnstile widget when a site key is configured.
+  useEffect(() => {
+    if (hasSession || !siteKey) return;
+    let cancelled = false;
+    loadTurnstile()
+      .then(() => {
+        const ts = typeof window !== 'undefined' ? window.turnstile : undefined;
+        const host = widgetHostRef.current;
+        if (cancelled || !ts || !host || widgetIdRef.current) return;
+        widgetIdRef.current = ts.render(host, {
+          sitekey: siteKey,
+          action: 'turnstile-spin-v1',
+          theme: 'dark',
+          callback: (token: string) => void mintRef.current(token),
+          'error-callback': () => setVerifyError('Verification error — refresh and try again.'),
+          'expired-callback': () => {
+            if (widgetIdRef.current) ts.reset(widgetIdRef.current);
+          },
+        });
+      })
+      .catch(() => setVerifyError('Could not load the verification widget.'));
+    return () => {
+      cancelled = true;
+      const ts = typeof window !== 'undefined' ? window.turnstile : undefined;
+      if (ts && widgetIdRef.current) {
+        try {
+          ts.remove(widgetIdRef.current);
+        } catch {
+          /* widget already gone */
+        }
+        widgetIdRef.current = null;
+      }
+    };
+  }, [siteKey, hasSession]);
 
   async function find() {
     if (!hasSession || !input.trim()) return;
@@ -120,14 +199,23 @@ export function ScraperInput({ deps = defaultDeps, initialHasSession, onMint = m
               >
                 {running ? 'Finding…' : 'Find images'}
               </button>
+            ) : siteKey ? (
+              <div className="flex flex-col gap-1.5">
+                <div ref={widgetHostRef} aria-label="Verify you are human" />
+                {verifying && <span className="font-mono text-xs text-zinc-400">Verifying…</span>}
+                {verifyError && <span className="font-mono text-xs text-amber-400">{verifyError}</span>}
+              </div>
             ) : (
-              <button
-                onClick={verify}
-                disabled={verifying}
-                className="inline-flex items-center rounded-lg border border-white/15 bg-white/5 px-4 py-2 text-sm text-zinc-100"
-              >
-                {verifying ? 'Verifying…' : 'Verify you are human'}
-              </button>
+              <div className="flex flex-col gap-1.5">
+                <button
+                  onClick={() => void completeMint('turnstile-token-placeholder')}
+                  disabled={verifying}
+                  className="inline-flex items-center rounded-lg border border-white/15 bg-white/5 px-4 py-2 text-sm text-zinc-100"
+                >
+                  {verifying ? 'Verifying…' : 'Verify you are human'}
+                </button>
+                {verifyError && <span className="font-mono text-xs text-amber-400">{verifyError}</span>}
+              </div>
             )}
             <span className="font-mono text-xs text-zinc-500">Reads &lt;img&gt; tags and CSS background-image. Public images only.</span>
           </div>

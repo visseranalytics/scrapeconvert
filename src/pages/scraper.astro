@@ -1,13 +1,18 @@
 ---
 import Base from '../layouts/Base.astro';
 import { ScraperInput } from '../components/app/ScraperInput';
+import { env } from 'cloudflare:workers';
 
 export const prerender = false;
+
+// Turnstile site key comes from the Worker runtime env ([vars] in wrangler.toml,
+// the single source of truth) and is passed to the client island as a prop.
+const siteKey = (env as Record<string, string>).PUBLIC_TURNSTILE_SITE_KEY ?? '';
 
 // Restrict where images can load from (the grid renders cross-origin thumbnails);
 // scripts/styles are left to Astro. Tightened further in Phase 4.
 Astro.response.headers.set('Content-Security-Policy', "img-src 'self' https: data: blob:");
 ---
 <Base title="ScrapeConvert — Scraper" description="Pull images from a page, a list of URLs, or a whole sitemap.">
-  <ScraperInput client:only="react" />
+  <ScraperInput client:only="react" siteKey={siteKey} />
 </Base>

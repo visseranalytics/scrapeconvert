@@ -1,9 +1,10 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ScrapedImage, ConvertOptions } from '../../lib/types';
 import {
   loadWorkbench, DEFAULT_CONVERT_OPTIONS, countSelected, visibleImages, type WorkbenchData,
 } from '../../lib/workbench-store';
 import { isSafePublicUrl } from '../../lib/url-safety';
+import { captureDimensions, readTransferSize, headSizeViaProxy } from '../../lib/metadata';
 import { flagDuplicates } from '../../lib/dedupe';
 import { estimateSize } from '../../lib/convert/estimate';
 import { pictureSnippet } from '../../lib/picture-snippet';
@@ -19,6 +20,7 @@ const WARN_BYTES = 100 * 1024 * 1024;
 interface WorkbenchDeps {
   convert?: (blob: Blob, opts: ConvertOptions) => Promise<Blob>;
   fetchBytes?: (url: string) => Promise<Blob>;
+  fetchSize?: (url: string) => Promise<number | undefined>;
   zip?: (files: { name: string; blob: Blob }[]) => Promise<Blob>;
   onDownload?: (blob: Blob, filename: string) => void;
   reverify?: () => Promise<boolean>;
@@ -48,8 +50,11 @@ export function Workbench({ initialData, localBlobs, deps = {}, hasSession = tru
 
   const convert = deps.convert ?? convertImage;
   const fetchBytes = deps.fetchBytes ?? (async (url: string) => (await fetchViaProxy(url, 'image')).blob());
+  const fetchSize = deps.fetchSize ?? headSizeViaProxy;
   const zip = deps.zip ?? buildZip;
   const onDownload = deps.onDownload ?? defaultDownload;
+  const sizeLimiter = useRef(createLimiter(4));
+  const sizing = useRef<Set<string>>(new Set());
 
   const renderable = images.filter((i) => i.url.startsWith('blob:') || isSafePublicUrl(i.url).ok);
   const visible = visibleImages(renderable, hideDuplicates);
@@ -64,24 +69,73 @@ export function Workbench({ initialData, localBlobs, deps = {}, hasSession = tru
     setImages((imgs) => [...imgs]);
   }
   function onThumbLoad(img: ScrapedImage, el: HTMLImageElement) {
-    if (el.naturalWidth && el.naturalHeight) {
-      img.width = el.naturalWidth;
-      img.height = el.naturalHeight;
+    let changed = false;
+    const dims = captureDimensions(el);
+    if (dims) {
+      img.width = dims.width;
+      img.height = dims.height;
+      changed = true;
+    }
+    if (img.size == null) {
+      const size = readTransferSize(img.url);
+      if (size != null) {
+        img.size = size;
+        changed = true;
+      }
+    }
+    if (changed) {
       flagDuplicates(images);
       rerender();
     }
+  }
+  // Resolve a byte size for an image we're about to count or convert. The free
+  // path (transferSize) is empty for cross-origin scraped thumbnails, so fall
+  // back to a throttled content-length read via the proxy. Bounded to selected
+  // images so we only pay egress for what the totals show and convert anyway.
+  function ensureSize(img: ScrapedImage) {
+    if (img.size != null || sizing.current.has(img.id)) return;
+    const ts = readTransferSize(img.url);
+    if (ts != null) {
+      img.size = ts;
+      flagDuplicates(images);
+      rerender();
+      return;
+    }
+    sizing.current.add(img.id);
+    void sizeLimiter.current(async () => {
+      let size: number | undefined;
+      try {
+        size = await fetchSize(img.url);
+      } finally {
+        sizing.current.delete(img.id);
+      }
+      if (size != null) {
+        img.size = size;
+        flagDuplicates(images);
+        rerender();
+      }
+    });
   }
   function toggle(id: string) {
     const i = images.find((x) => x.id === id);
     if (i) {
       i.selected = !i.selected;
+      if (i.selected) ensureSize(i);
       rerender();
     }
   }
   function selectAllVisible(on: boolean) {
-    for (const i of visible) i.selected = on;
+    for (const i of visible) {
+      i.selected = on;
+      if (on) ensureSize(i);
+    }
     rerender();
   }
+  // Pre-selected images (e.g. rehydrated from a prior session) need sizes too.
+  useEffect(() => {
+    for (const i of images) if (i.selected) ensureSize(i);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function convertAndDownload() {
     if (selected.length === 0) return;
@@ -198,7 +252,17 @@ export function Workbench({ initialData, localBlobs, deps = {}, hasSession = tru
           <div className="mb-3 flex items-center justify-between">
             <span className="font-mono text-sm text-zinc-300">Images <span className="text-zinc-500">{visible.length}</span></span>
             <div className="flex items-center gap-3 font-mono text-xs text-zinc-400">
-              <button onClick={() => selectAllVisible(true)}>Select all</button>
+              <button
+                onClick={() => selectAllVisible(true)}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-zinc-900 px-3 py-1.5 text-zinc-300 transition-colors hover:border-white/15 hover:text-zinc-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950"
+              >
+                <span className="flex h-3.5 w-3.5 items-center justify-center rounded border border-accent-400 bg-accent-400/20 text-accent-300">
+                  <svg viewBox="0 0 24 24" className="h-2.5 w-2.5" fill="none" stroke="currentColor" strokeWidth={3.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <path d="M20 6 9 17l-5-5" />
+                  </svg>
+                </span>
+                Select all
+              </button>
               <label className="flex items-center gap-1.5">
                 <input type="checkbox" aria-label="Hide duplicates" checked={hideDuplicates} onChange={(e) => setHideDuplicates(e.target.checked)} />
                 Hide duplicates
@@ -211,28 +275,55 @@ export function Workbench({ initialData, localBlobs, deps = {}, hasSession = tru
           ) : (
             <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
               {visible.map((img) => (
-                <li key={img.id} className="relative overflow-hidden rounded-lg border border-white/10 bg-zinc-800">
-                  <img
-                    src={img.url}
-                    alt={img.alt}
-                    referrerPolicy="no-referrer"
-                    loading="lazy"
-                    className="aspect-[4/3] w-full object-cover"
-                    onLoad={(e) => onThumbLoad(img, e.currentTarget)}
-                  />
-                  <label className="absolute left-1.5 top-1.5">
-                    <input type="checkbox" aria-label={`Select ${img.name}`} checked={img.selected} onChange={() => toggle(img.id)} />
+                <li
+                  key={img.id}
+                  className={`group relative overflow-hidden rounded-lg border bg-zinc-800 transition-colors ${
+                    img.selected ? 'border-accent-400/40 ring-1 ring-accent-400/20' : 'border-white/10'
+                  }`}
+                >
+                  <label className="block cursor-pointer">
+                    <input
+                      type="checkbox"
+                      className="peer sr-only"
+                      aria-label={`Select ${img.name}`}
+                      checked={img.selected}
+                      onChange={() => toggle(img.id)}
+                    />
+                    <img
+                      src={img.url}
+                      alt={img.alt}
+                      referrerPolicy="no-referrer"
+                      loading="lazy"
+                      className="aspect-[4/3] w-full object-cover"
+                      onLoad={(e) => onThumbLoad(img, e.currentTarget)}
+                    />
+                    <span className="pointer-events-none absolute left-1.5 top-1.5 flex h-5 w-5 items-center justify-center rounded border border-white/30 bg-zinc-950/60 text-transparent transition-colors peer-checked:border-accent-400 peer-checked:bg-accent-400/20 peer-checked:text-accent-300 peer-focus-visible:ring-2 peer-focus-visible:ring-accent-400 peer-focus-visible:ring-offset-2 peer-focus-visible:ring-offset-zinc-950">
+                      <svg viewBox="0 0 24 24" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth={3.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <path d="M20 6 9 17l-5-5" />
+                      </svg>
+                    </span>
                   </label>
-                  {img.isDuplicate && (
-                    <span className="absolute right-1.5 top-1.5 rounded bg-amber-400/90 px-1 font-mono text-[9px] font-medium text-zinc-950">dupe</span>
-                  )}
+                  <div className="absolute right-1.5 top-1.5 flex items-center gap-1">
+                    {img.isDuplicate && (
+                      <span className="rounded bg-amber-400/90 px-1 font-mono text-[9px] font-medium text-zinc-950">dupe</span>
+                    )}
+                    <button
+                      onClick={() => setSnippetFor(img.id)}
+                      aria-label="Get <picture> code"
+                      title="Get <picture> code"
+                      className="inline-flex h-5 w-5 items-center justify-center rounded-md border border-white/15 bg-zinc-950/80 text-zinc-300 backdrop-blur transition-colors hover:border-accent-400/40 hover:text-accent-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950"
+                    >
+                      <svg viewBox="0 0 24 24" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <path d="m18 16 4-4-4-4" />
+                        <path d="m6 8-4 4 4 4" />
+                        <path d="m14.5 4-5 16" />
+                      </svg>
+                    </button>
+                  </div>
                   <div className="flex items-center justify-between bg-black/55 px-1.5 py-1 font-mono text-[10px] text-zinc-200">
                     <span>{img.format}</span>
                     <span className="tabular-nums">{img.size ? formatBytes(img.size) : '—'}</span>
                   </div>
-                  <button onClick={() => setSnippetFor(img.id)} className="w-full bg-zinc-900 py-1 font-mono text-[10px] text-zinc-400 hover:text-zinc-100">
-                    Get &lt;picture&gt; code
-                  </button>
                   {snippetFor === img.id && (
                     <div className="absolute inset-0 z-10 flex flex-col bg-zinc-950/95 p-2" role="dialog" aria-label="picture snippet">
                       <textarea readOnly className="flex-1 resize-none bg-transparent font-mono text-[10px] text-accent-200" value={pictureSnippet(img, FORMATS)} />

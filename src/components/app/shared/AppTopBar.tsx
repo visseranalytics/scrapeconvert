@@ -10,9 +10,11 @@ export function AppTopBar({ active, hasSession }: Props) {
   return (
     <header className="sticky top-0 z-40 border-b border-white/10 bg-zinc-950/80 backdrop-blur">
       <nav className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4 lg:px-6" aria-label="App">
-        <a href="/" className="flex items-center gap-2 font-mono text-sm font-semibold text-zinc-50">
-          <span className="flex h-6 w-6 items-center justify-center rounded-md border border-accent-400/40 bg-accent-400/10 text-accent-400" aria-hidden="true">{'<>'}</span>
-          ScrapeConvert
+        <a href="/" className="flex items-center gap-2 font-mono text-sm font-semibold tracking-tight">
+          <span className="flex h-7 w-7 items-center justify-center overflow-hidden rounded-md bg-white" aria-hidden="true">
+            <img src="/images/logo-mark.png" alt="" className="h-full w-full object-cover" />
+          </span>
+          <span><span className="text-zinc-50">Scrape</span><span className="text-accent-400">Convert</span></span>
         </a>
         <div className="flex items-center gap-1">
           <a href="/scraper" className={active === 'scraper' ? activeTab : tab} aria-current={active === 'scraper' ? 'page' : undefined}>Scraper</a>

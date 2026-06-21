@@ -31,3 +31,6 @@ dist-ssr
 .wrangler-dry/
 .dev.vars
 wrangler.toml.bak
+
+# Design mocks (local reference only, not shipped)
+design-mocks/
