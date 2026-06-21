@@ -13,6 +13,9 @@
     "deploy": "astro build && wrangler deploy -c dist/server/wrangler.json",
     "deploy:staging": "astro build && wrangler deploy -c dist/server/wrangler.json --name scrapeconvert-staging",
     "cleanup-check": "./scripts/cleanup-check.sh",
+    "test": "vitest run -c vitest.config.ts && vitest run -c vitest.workers.config.ts",
+    "test:node": "vitest run -c vitest.config.ts",
+    "test:workers": "vitest run -c vitest.workers.config.ts",
     "astro": "astro"
   },
   "dependencies": {
@@ -30,12 +33,15 @@
     "uuid": "13.0.0"
   },
   "devDependencies": {
+    "@cloudflare/vitest-pool-workers": "^0.16.18",
+    "@cloudflare/workers-types": "^4.20260621.1",
     "@tailwindcss/vite": "4.3.1",
     "@types/node": "22.14.0",
     "@types/react": "19.2.7",
     "@types/react-dom": "19.2.3",
     "tailwindcss": "4.3.1",
     "typescript": "5.8.2",
+    "vitest": "^4.1.9",
     "wrangler": "4.103.0"
   }
 }

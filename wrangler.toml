@@ -20,6 +20,16 @@ PER_TOKEN_FETCH_BUDGET = "300"                      # total fetches per session 
 PER_TOKEN_BYTE_BUDGET = "1073741824"                # 1 GB total bytes per session token
 PER_HOST_FETCH_CAP = "120"                          # per-destination-host cap per session
 HOST_DENYLIST = ""                                  # comma-separated extra denied hosts
+# --- Phase 1 (proxy) ---
+ZONE_APEX = "scrapeconvert.com"                     # own-zone deny (apex + subdomains)
+DOH_ENDPOINT = "https://cloudflare-dns.com/dns-query"  # DNS-over-HTTPS resolver for IP pinning
+GLOBAL_EGRESS_BYTE_CAP = "107374182400"             # 100 GB global egress circuit breaker
+MINT_RATE_PER_IP_PER_MIN = "10"                     # /api/turnstile mint cap per IP per minute
+
+# Per-token / per-host budget counters + Turnstile dup-token set live in KV.
+[[kv_namespaces]]
+binding = "BUDGETS"
+id = "PLACEHOLDER_REPLACE_WITH_REAL_KV_ID"
 
 # Rate-limit binding PLACEHOLDER (modern top-level [[ratelimits]] shape).
 # Phase 1 keys this on the session token (NOT IP); it is a per-colo,
