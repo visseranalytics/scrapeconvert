@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://www.scrapeconvert.com/sitemap.xml
+Sitemap: https://scrapeconvert.com/sitemap.xml

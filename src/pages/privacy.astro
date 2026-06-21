@@ -1,0 +1,43 @@
+---
+import Base from '../layouts/Base.astro';
+---
+<Base title="ScrapeConvert - Privacy" description="How ScrapeConvert handles your data: conversion runs in your browser, nothing is uploaded, and there are no ad trackers.">
+  <main class="mx-auto max-w-3xl px-6 py-16 prose-invert">
+    <p class="font-mono text-xs uppercase tracking-widest text-accent-400">Legal</p>
+    <h1 class="mt-3 text-3xl font-semibold tracking-tight text-zinc-50 sm:text-4xl">Privacy</h1>
+    <p class="mt-5 text-base leading-relaxed text-zinc-400">
+      ScrapeConvert is built so that your files and your activity stay yours. Here is what that means in practice.
+    </p>
+
+    <h2 class="mt-12 text-xl font-semibold text-zinc-100">Conversion runs in your browser</h2>
+    <p class="mt-3 text-base leading-relaxed text-zinc-400">
+      When you convert images, all of the work happens on your own device. Your image files are never uploaded to a server and we never receive a copy. Nothing about your conversion is stored anywhere but your own machine.
+    </p>
+
+    <h2 class="mt-10 text-xl font-semibold text-zinc-100">Scraping uses a proxy, and nothing is kept</h2>
+    <p class="mt-3 text-base leading-relaxed text-zinc-400">
+      To scrape a page, your browser needs to reach other sites, which browsers block by default through CORS. The page and image fetches pass through a small proxy only so the request can get through. We do not store the pages or the images that transit the proxy. Nothing is written to a database or a storage bucket.
+    </p>
+
+    <h2 class="mt-10 text-xl font-semibold text-zinc-100">No accounts</h2>
+    <p class="mt-3 text-base leading-relaxed text-zinc-400">
+      There is nothing to sign up for. We do not ask for an email, a name, or any other personal detail, so there is no account data to hold.
+    </p>
+
+    <h2 class="mt-10 text-xl font-semibold text-zinc-100">No ad trackers</h2>
+    <p class="mt-3 text-base leading-relaxed text-zinc-400">
+      There are no third-party ad trackers on this site. We use privacy-friendly analytics so we can tell that the tool is being used, and that is all. We do not build a profile of you or sell anything about you.
+    </p>
+
+    <h2 class="mt-10 text-xl font-semibold text-zinc-100">No server-side persistence of your data</h2>
+    <p class="mt-3 text-base leading-relaxed text-zinc-400">
+      We do not keep your files, your URLs, or your conversions on our servers. The site is a tool you run, not a place where your work is collected.
+    </p>
+
+    <p class="mt-12">
+      <a href="/" class="inline-flex items-center gap-1.5 font-mono text-sm text-accent-300 transition-colors duration-150 hover:text-accent-400">
+        Back home
+      </a>
+    </p>
+  </main>
+</Base>

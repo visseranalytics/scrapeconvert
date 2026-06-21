@@ -2,7 +2,7 @@
 
 ## What a fresh visitor should grasp in 5 seconds
 
-ScrapeConvert is a free tool that pulls images off any website (one page, several pages, or a whole site), flags the duplicate copies, and converts the ones you pick to WebP, PNG, or JPEG. The conversion runs in your own browser, so your image files are never uploaded or stored. No account, no ads. If you build or refresh websites, this is the tool that does the grabbing and the converting in one place instead of two.
+ScrapeConvert is a free tool that pulls images off any website (one page, several pages, or a whole site), flags the duplicate copies, and converts the ones you pick to WebP, AVIF, PNG, or JPEG. The conversion runs in your own browser, so your image files are never uploaded or stored. No account, no ads. If you build or refresh websites, this is the tool that does the grabbing and the converting in one place instead of two.
 
 Voice pass applied: no em dashes, no buzzwords, no three-part rhythm lines, no fragments posing as sentences, no formulaic openers. Plain outcomes lead. Technical terms (CORS, LCP, Core Web Vitals) sit in parentheses or in the FAQ. Honesty checks applied: conversion is stated as local with no server copies; scraping is never claimed to be local (the proxy is disclosed); no competitor is named, only "most tools."
 
@@ -14,7 +14,7 @@ Voice pass applied: no em dashes, no buzzwords, no three-part rhythm lines, no f
 ScrapeConvert: pull images off any website and convert them in your browser
 
 **Description:**
-Extract images from one page, several pages, or a whole site, flag the duplicates, then convert and resize them to WebP, PNG, or JPEG. Conversion runs in your browser, so your files are never stored. Free, no signup, no ads.
+Extract images from one page, several pages, or a whole site, flag the duplicates, then convert and resize them to WebP, AVIF, PNG, or JPEG. Conversion runs in your browser, so your files are never stored. Free, no signup, no ads.
 
 *Intent: name both jobs in the title (extract and convert). Lead the description with the scraper reach and the privacy benefit. Drops the vague "Built for making websites."*
 
@@ -32,7 +32,7 @@ The first line has to make "pull images off any site and convert them in your br
 Pull every image off a website and get it ready for the web.
 
 **Subhead:**
-Point ScrapeConvert at a page, a list of pages, or a whole site. It finds the images, flags the duplicates, and converts the ones you pick to WebP, PNG, or JPEG. The conversion runs in your browser, so your files are never stored.
+Point ScrapeConvert at a page, a list of pages, or a whole site. It finds the images, flags the duplicates, and converts the ones you pick to WebP, AVIF, PNG, or JPEG. The conversion runs in your browser, so your files are never stored.
 
 **Reassurance line (under the buttons):**
 Public images only. No account and no ads. The conversion never leaves your browser. Works in Chrome, Firefox, and Safari.
@@ -168,7 +168,7 @@ In-browser, no server copies, tweak and retry, no limits, no signup, no ads. Giv
 **Intro:**
 Pick a format, set the quality, resize if you need to, and download everything as one ZIP. The conversion runs on your own machine, so no server ever stores a copy of your images.
 
-**Feature: WebP, PNG, or JPEG**
+**Feature: WebP, AVIF, PNG, or JPEG**
 Convert a whole batch to one format at once. WebP is usually the smallest for the web. PNG and JPEG are there when a project calls for them.
 
 **Feature: Tweak and re-run until it looks right**
@@ -272,7 +272,7 @@ It works on most public sites. To stay respectful and safe, the scraper skips pa
 It is built for real sites with many pages and thousands of images, including sitemaps with hundreds of URLs. Very large crawls run slower because of the rate limits above, but they will not fall over.
 
 **Which formats does it convert to?**
-WebP, PNG, and JPEG today. WebP is usually the smallest for the web. AVIF is on the list we are looking at; if you need it, open an issue on GitHub.
+WebP, AVIF, PNG, and JPEG, all available today. WebP is usually the smallest common format for the web, and AVIF is often smaller still.
 
 **How does duplicate detection work?**
 It compares the image content, not just the filename, so it catches the same picture served at different URLs and sizes, including retina `@2x` and responsive variants.

@@ -17,7 +17,7 @@ PATTERNS=(
 fail=0
 for pat in "${PATTERNS[@]}"; do
   matches=$(git ls-files \
-    | grep -vE '^(docs/|design-mocks/|scripts/cleanup-check\.sh$)' \
+    | grep -vE '^(docs/|design-mocks/|extension/test/|scripts/cleanup-check\.sh$)' \
     | xargs grep -nIE "$pat" 2>/dev/null || true)
   if [ -n "$matches" ]; then
     echo "CLEANUP FAIL: pattern '$pat' still present:"

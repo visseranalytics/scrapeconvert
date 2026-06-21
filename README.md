@@ -54,6 +54,9 @@ Copy `.env.example` to `.dev.vars` and fill in local values for `wrangler dev`.
         npm run deploy             # production
         npm run deploy:staging     # staging Worker (scrapeconvert-staging)
 
+For the staging verification, the DNS switch from Vercel, and the one-line
+rollback, follow the [cutover runbook](docs/runbooks/cutover.md).
+
 The build runs `astro build`, and the `@astrojs/cloudflare` adapter emits the deployable
 config at `dist/server/wrangler.json`, which the deploy scripts pass to Wrangler with
 `-c`. The deploy fails if `SESSION_HMAC_SECRET` is unset. There is no default.
