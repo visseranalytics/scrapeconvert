@@ -21,7 +21,7 @@ export function AppTopBar({ active, hasSession }: Props) {
           <a href="/workbench" className={active === 'workbench' ? activeTab : tab} aria-current={active === 'workbench' ? 'page' : undefined}>Workbench</a>
         </div>
         <div className="flex items-center gap-3">
-          <a href="https://github.com/scrapeconvert/scrapeconvert" className="font-mono text-xs text-zinc-400 hover:text-zinc-100">GitHub</a>
+          <a href="https://github.com/visseranalytics/scrapeconvert" className="font-mono text-xs text-zinc-400 hover:text-zinc-100">GitHub</a>
           {hasSession && (
             <span className="inline-flex items-center gap-1.5 rounded-full border border-accent-400/30 bg-accent-400/10 px-2.5 py-1 font-mono text-xs text-accent-300" data-testid="verified-chip">
               <span className="h-1.5 w-1.5 rounded-full bg-accent-400" aria-hidden="true" />
