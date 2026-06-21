@@ -9,7 +9,7 @@ import { flagDuplicates } from '../../lib/dedupe';
 import { estimateSize } from '../../lib/convert/estimate';
 import { pictureSnippet } from '../../lib/picture-snippet';
 import { convertImage, buildZip } from '../../lib/convert';
-import { fetchViaProxy } from '../../lib/proxy-client';
+import { fetchViaProxy, ProxyClientError } from '../../lib/proxy-client';
 import { createLimiter } from '../../lib/concurrency';
 import { formatBytes } from '../../lib/bytes';
 import { AppTopBar } from './shared/AppTopBar';
@@ -123,8 +123,12 @@ export function Workbench({ initialData, localBlobs, deps = {}, hasSession = tru
       const archive = await zip(out);
       onDownload(archive, 'scrapeconvert.zip');
       setStatus(`Converted ${out.length} image${out.length === 1 ? '' : 's'}.`);
-    } catch {
-      setStatus('Some images failed to convert.');
+    } catch (e) {
+      setStatus(
+        e instanceof ProxyClientError && e.kind === 'needs-verification'
+          ? 'Your session expired — re-verify on the Scraper page, then try again.'
+          : 'Some images failed to convert.',
+      );
     } finally {
       setBusy(false);
     }

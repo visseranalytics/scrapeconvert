@@ -32,7 +32,13 @@ function bearer(req: Request): string | null {
 
 export async function GET(ctx: APIContext): Promise<Response> {
   const e = env as Record<string, unknown>;
-  const hmacSecret = requireSecret('SESSION_HMAC_SECRET', e.SESSION_HMAC_SECRET as string | undefined);
+  // Missing prod secret is a deploy misconfig, not a client error: clean 503.
+  let hmacSecret: string;
+  try {
+    hmacSecret = requireSecret('SESSION_HMAC_SECRET', e.SESSION_HMAC_SECRET as string | undefined);
+  } catch {
+    return err(503, 'server-misconfig');
+  }
   const req = ctx.request;
 
   // 1. Auth

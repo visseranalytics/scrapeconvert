@@ -3,6 +3,7 @@ import { describe, it, expect, vi, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, cleanup, within } from '@testing-library/react';
 import { Workbench } from './Workbench';
 import { DEFAULT_CONVERT_OPTIONS, type WorkbenchData } from '../../lib/workbench-store';
+import { ProxyClientError } from '../../lib/proxy-client';
 import type { ScrapedImage } from '../../lib/types';
 
 afterEach(cleanup);
@@ -96,5 +97,14 @@ describe('Workbench', () => {
   it('shows real byte totals when selected images carry a size (e.g. local uploads)', () => {
     render(<Workbench initialData={data([img('a', { selected: true, size: 2 * 1024 * 1024 })])} />);
     expect(screen.getByText('Original').nextElementSibling?.textContent).toBe('2.0 MB');
+  });
+
+  it('surfaces a re-verify hint when convert hits an expired session (401)', async () => {
+    const fetchBytes = vi.fn(async () => {
+      throw new ProxyClientError('needs-verification', 401);
+    });
+    render(<Workbench initialData={data([img('a', { selected: true })])} deps={{ fetchBytes }} />);
+    fireEvent.click(screen.getByRole('button', { name: /Convert & download ZIP/ }));
+    await waitFor(() => expect(screen.getByRole('status').textContent).toMatch(/re-verify/i));
   });
 });

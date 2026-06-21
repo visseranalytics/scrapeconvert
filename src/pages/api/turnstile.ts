@@ -32,8 +32,16 @@ async function mintRateLimited(kv: KVNamespace, ip: string, limit: number): Prom
 
 export async function POST(ctx: APIContext): Promise<Response> {
   const e = env as Record<string, unknown>;
-  const hmacSecret = requireSecret('SESSION_HMAC_SECRET', e.SESSION_HMAC_SECRET as string | undefined);
-  const tsSecret = requireSecret('TURNSTILE_SECRET_KEY', e.TURNSTILE_SECRET_KEY as string | undefined);
+  // Missing prod secrets are a deploy misconfig, not a client error: return a
+  // clean, diagnosable 503 instead of an opaque unhandled 500.
+  let hmacSecret: string;
+  let tsSecret: string;
+  try {
+    hmacSecret = requireSecret('SESSION_HMAC_SECRET', e.SESSION_HMAC_SECRET as string | undefined);
+    tsSecret = requireSecret('TURNSTILE_SECRET_KEY', e.TURNSTILE_SECRET_KEY as string | undefined);
+  } catch {
+    return json({ error: 'server-misconfig' }, 503);
+  }
   const kv = e.BUDGETS as KVNamespace;
   const ttl = Number((e.SESSION_TOKEN_TTL_SECONDS as string) ?? '2700');
   const mintLimit = Number((e.MINT_RATE_PER_IP_PER_MIN as string) ?? '10');
