@@ -9,5 +9,6 @@
     }
   },
   "include": [".astro/types.d.ts", "**/*"],
-  "exclude": ["dist", ".wrangler"]
+  "comment": "Endpoint tests import the workerd-only `cloudflare:test` module; they are typechecked + run by the workers pool (vitest.workers.config.ts) in a workerd env, not by this project-wide tsc gate.",
+  "exclude": ["dist", ".wrangler", "src/pages/api/**/*.endpoint.test.ts"]
 }

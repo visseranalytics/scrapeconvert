@@ -8,6 +8,6 @@ export default defineConfig({
     environment: 'node',
     globals: true,
     setupFiles: ['./test/setup.node.ts'],
-    include: ['src/lib/**/*.test.ts', 'src/server/token.test.ts'],
+    include: ['src/lib/**/*.test.ts', 'src/server/token.test.ts', 'src/server/turnstile.test.ts'],
   },
 });
