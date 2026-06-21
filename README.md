@@ -80,6 +80,21 @@ secrets above on your own Worker, adjust `[vars]` in `wrangler.toml`, and run
 `npm run deploy`. You own the fetch relay you expose, so review the abuse budgets and
 the host denylist before running a public instance.
 
+## Proxy security and abuse
+
+The scraping proxy (`/api/fetch`) is SSRF-pinned and abuse-bounded. Before deploy:
+
+- Set the required secrets (deploy fails if unset):
+  - `wrangler secret put SESSION_HMAC_SECRET`
+  - `wrangler secret put TURNSTILE_SECRET_KEY`
+- Review the budget vars in `wrangler.toml`: `PER_TOKEN_FETCH_BUDGET`,
+  `PER_TOKEN_BYTE_BUDGET`, `PER_HOST_FETCH_CAP`, `GLOBAL_EGRESS_BYTE_CAP`,
+  `MINT_RATE_PER_IP_PER_MIN`, `SESSION_TOKEN_TTL_SECONDS`.
+- Extend the destination blocklist with `HOST_DENYLIST` (comma-separated host
+  suffixes) as needed.
+- Read [`docs/ABUSE_POLICY.md`](docs/ABUSE_POLICY.md) so you understand the
+  residual open-relay risk you accept by running an instance.
+
 ## License
 
 MIT. See [LICENSE](LICENSE).

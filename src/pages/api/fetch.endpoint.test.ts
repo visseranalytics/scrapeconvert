@@ -166,4 +166,12 @@ describe('GET /api/fetch', () => {
     (env as any).PER_HOST_FETCH_CAP = original;
     expect(last).toBe(429);
   });
+
+  it('400 when the target host is on HOST_DENYLIST', async () => {
+    const original = (env as any).HOST_DENYLIST;
+    (env as any).HOST_DENYLIST = 'banned.test,evil.example';
+    const res = await GET(asCtx(fetchReq('https://sub.banned.test/x', await validToken())));
+    (env as any).HOST_DENYLIST = original;
+    expect(res.status).toBe(400);
+  });
 });

@@ -13,6 +13,8 @@
     "deploy": "astro build && wrangler deploy -c dist/server/wrangler.json",
     "deploy:staging": "astro build && wrangler deploy -c dist/server/wrangler.json --name scrapeconvert-staging",
     "cleanup-check": "./scripts/cleanup-check.sh",
+    "check:secrets": "node scripts/check-secrets.mjs",
+    "predeploy": "node scripts/check-secrets.mjs",
     "test": "vitest run -c vitest.config.ts",
     "test:node": "vitest run -c vitest.config.ts",
     "test:workers": "vitest run -c vitest.workers.config.ts",
