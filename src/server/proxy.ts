@@ -285,3 +285,23 @@ function streamCapped(
   });
   return new Response(body, { status: 200, headers: outHeaders });
 }
+
+export function isOwnZoneOrDenied(
+  target: URL,
+  requestHost: string,
+  zoneApex: string,
+  denylist: string[],
+): boolean {
+  const host = target.hostname.toLowerCase();
+  const apex = zoneApex.toLowerCase();
+  if (apex && (host === apex || host.endsWith('.' + apex))) return true;
+  if (host === requestHost.toLowerCase()) return true;
+  if (host.endsWith('.workers.dev')) return true;
+  if (target.pathname.startsWith('/api/fetch')) return true;
+  for (const d of denylist) {
+    const dd = d.trim().toLowerCase();
+    if (!dd) continue;
+    if (host === dd || host.endsWith('.' + dd)) return true;
+  }
+  return false;
+}
