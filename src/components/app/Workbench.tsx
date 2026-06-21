@@ -126,7 +126,7 @@ export function Workbench({ initialData, localBlobs, deps = {}, hasSession = tru
     } catch (e) {
       setStatus(
         e instanceof ProxyClientError && e.kind === 'needs-verification'
-          ? 'Your session expired — re-verify on the Scraper page, then try again.'
+          ? 'Your session timed out. Verify again on the Scraper page, then try again.'
           : 'Some images failed to convert.',
       );
     } finally {
@@ -205,7 +205,7 @@ export function Workbench({ initialData, localBlobs, deps = {}, hasSession = tru
             </div>
             {selectedBytes > WARN_BYTES && (
               <p className="mt-2 rounded-md border border-amber-400/30 bg-amber-400/10 px-2 py-1 font-mono text-[11px] text-amber-300" role="alert">
-                That is {formatBytes(selectedBytes)} to fetch and convert. Convert a smaller selection to go faster.
+                That is {formatBytes(selectedBytes)} to download and convert. Pick fewer images to speed things up.
               </p>
             )}
             <button onClick={convertAndDownload} disabled={busy || selected.length === 0} className="mt-3 w-full rounded-lg bg-accent-400 px-4 py-2 text-sm font-medium text-zinc-950 disabled:opacity-50">
@@ -238,7 +238,7 @@ export function Workbench({ initialData, localBlobs, deps = {}, hasSession = tru
           </div>
 
           {visible.length === 0 ? (
-            <p className="rounded-2xl border border-white/10 bg-zinc-900/40 p-8 text-center font-mono text-sm text-zinc-500">No images yet.</p>
+            <p className="rounded-2xl border border-white/10 bg-zinc-900/40 p-8 text-center font-mono text-sm text-zinc-500">No images yet. Scrape a page or drop in your own files.</p>
           ) : (
             <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
               {visible.map((img) => (

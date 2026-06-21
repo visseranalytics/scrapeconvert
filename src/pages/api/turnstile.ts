@@ -12,8 +12,17 @@ function clientIp(req: Request): string {
   return req.headers.get('cf-connecting-ip') || req.headers.get('x-real-ip') || '0.0.0.0';
 }
 
+async function sha256Hex(input: string): Promise<string> {
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(input));
+  let hex = '';
+  for (const b of new Uint8Array(digest)) hex += b.toString(16).padStart(2, '0');
+  return hex;
+}
+
 async function alreadySeen(kv: KVNamespace, token: string): Promise<boolean> {
-  const key = `ts:dup:${token}`;
+  // Hash the token into the key: a real Turnstile token is ~800 bytes but KV
+  // keys cap at 512, so `ts:dup:${token}` throws 414 (only short test tokens fit).
+  const key = `ts:dup:${await sha256Hex(token)}`;
   const hit = await kv.get(key);
   if (hit) return true;
   await kv.put(key, '1', { expirationTtl: 600 }); // Turnstile tokens expire ~5min; 10min set is safe

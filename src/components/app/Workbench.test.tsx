@@ -105,6 +105,6 @@ describe('Workbench', () => {
     });
     render(<Workbench initialData={data([img('a', { selected: true })])} deps={{ fetchBytes }} />);
     fireEvent.click(screen.getByRole('button', { name: /Convert & download ZIP/ }));
-    await waitFor(() => expect(screen.getByRole('status').textContent).toMatch(/re-verify/i));
+    await waitFor(() => expect(screen.getByRole('status').textContent).toMatch(/scraper/i));
   });
 });
