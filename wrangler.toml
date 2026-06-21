@@ -1,0 +1,40 @@
+name = "scrapeconvert"
+compatibility_date = "2026-06-21"
+# WebCrypto only; nodejs_compat is intentionally NOT enabled (see Global Constraints).
+compatibility_flags = []
+
+# NOTE: main/assets are supplied by @astrojs/cloudflare at build time. The adapter
+# reads this file and emits the deployable config at dist/server/wrangler.json.
+# Deploy with:  wrangler deploy -c dist/server/wrangler.json
+# Staging:      wrangler deploy -c dist/server/wrangler.json --name scrapeconvert-staging
+
+# Non-secret config. The Turnstile SITE key is public (rendered in the client island);
+# the PUBLIC_ prefix exposes it to client code. SECRETS (SESSION_HMAC_SECRET,
+# TURNSTILE_SECRET_KEY) are NOT here; set them with `wrangler secret put <NAME>`.
+[vars]
+PUBLIC_TURNSTILE_SITE_KEY = "1x00000000000000000000AA"   # Cloudflare always-passes test site key; override per env
+SESSION_TOKEN_TTL_SECONDS = "2700"                  # 45 min session token TTL (spec ##17)
+MAX_HTML_BYTES = "5242880"                          # 5 MB HTML/sitemap cap
+MAX_IMAGE_BYTES = "26214400"                        # 25 MB image cap
+PER_TOKEN_FETCH_BUDGET = "300"                      # total fetches per session token
+PER_TOKEN_BYTE_BUDGET = "1073741824"                # 1 GB total bytes per session token
+PER_HOST_FETCH_CAP = "120"                          # per-destination-host cap per session
+HOST_DENYLIST = ""                                  # comma-separated extra denied hosts
+# --- Phase 1 (proxy) ---
+ZONE_APEX = "scrapeconvert.com"                     # own-zone deny (apex + subdomains)
+DOH_ENDPOINT = "https://cloudflare-dns.com/dns-query"  # DNS-over-HTTPS resolver for IP pinning
+GLOBAL_EGRESS_BYTE_CAP = "107374182400"             # 100 GB global egress circuit breaker
+MINT_RATE_PER_IP_PER_MIN = "10"                     # /api/turnstile mint cap per IP per minute
+
+# Per-token / per-host budget counters + Turnstile dup-token set live in KV.
+[[kv_namespaces]]
+binding = "BUDGETS"
+id = "PLACEHOLDER_REPLACE_WITH_REAL_KV_ID"
+
+# Rate-limit binding PLACEHOLDER (modern top-level [[ratelimits]] shape).
+# Phase 1 keys this on the session token (NOT IP); it is a per-colo,
+# eventually-consistent 10s/60s soft throttle and owns the final binding shape.
+[[ratelimits]]
+name = "RATE_LIMITER"
+namespace_id = "1001"
+simple = { limit = 60, period = 60 }

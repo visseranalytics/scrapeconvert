@@ -1,0 +1,48 @@
+---
+import Base from '../layouts/Base.astro';
+---
+<Base title="ScrapeConvert - Acceptable use" description="What ScrapeConvert will and will not scrape, the limits the proxy enforces, and how to report abuse.">
+  <main class="mx-auto max-w-3xl px-6 py-16 prose-invert">
+    <p class="font-mono text-xs uppercase tracking-widest text-accent-400">Legal</p>
+    <h1 class="mt-3 text-3xl font-semibold tracking-tight text-zinc-50 sm:text-4xl">Acceptable use</h1>
+    <p class="mt-5 text-base leading-relaxed text-zinc-400">
+      ScrapeConvert is built to stay light and fair on the sites you point it at. These are the rules it follows and the limits it enforces.
+    </p>
+
+    <h2 class="mt-12 text-xl font-semibold text-zinc-100">Public images only</h2>
+    <p class="mt-3 text-base leading-relaxed text-zinc-400">
+      ScrapeConvert pulls public images only. It is meant for images that are openly served on a page, not for anything behind a login or otherwise restricted.
+    </p>
+
+    <h2 class="mt-10 text-xl font-semibold text-zinc-100">Paid stock-photo sites are skipped</h2>
+    <p class="mt-3 text-base leading-relaxed text-zinc-400">
+      The scraper skips paid stock-photo sites. Those images are sold under a license, and grabbing them is not what this tool is for.
+    </p>
+
+    <h2 class="mt-10 text-xl font-semibold text-zinc-100">The proxy enforces limits</h2>
+    <p class="mt-3 text-base leading-relaxed text-zinc-400">
+      The proxy that sits between your browser and a target site refuses private and internal addresses, so it cannot be pointed at machines that are not meant to be public. It rate-limits requests and caps how much it will pull from any single destination host, so a crawl stays light on the site it touches.
+    </p>
+
+    <h2 class="mt-10 text-xl font-semibold text-zinc-100">No cross-site abuse</h2>
+    <p class="mt-3 text-base leading-relaxed text-zinc-400">
+      Do not use ScrapeConvert to overload a site, to work around access controls, or to gather images you do not have the right to use. The limits above are there to keep it from being turned into an abuse tool, and we ask that you use it in that spirit.
+    </p>
+
+    <h2 class="mt-10 text-xl font-semibold text-zinc-100">A note on robots.txt</h2>
+    <p class="mt-3 text-base leading-relaxed text-zinc-400">
+      In this first version, ScrapeConvert does not automatically read and honor robots.txt. We are stating that plainly so you know where things stand. Please respect the wishes of the sites you scrape, and check their rules yourself when it matters.
+    </p>
+
+    <h2 class="mt-10 text-xl font-semibold text-zinc-100">Reporting abuse</h2>
+    <p class="mt-3 text-base leading-relaxed text-zinc-400">
+      If you believe ScrapeConvert is being used against your site, or you see misuse, please report it using the contact details on the site so we can look into it.
+    </p>
+
+    <p class="mt-12">
+      <a href="/" class="inline-flex items-center gap-1.5 font-mono text-sm text-accent-300 transition-colors duration-150 hover:text-accent-400">
+        Back home
+      </a>
+    </p>
+  </main>
+</Base>

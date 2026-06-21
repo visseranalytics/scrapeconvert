@@ -22,14 +22,14 @@ body {
 
 header {
   padding: 16px;
-  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  background: #09090b;
   border-bottom: 1px solid #2a2a3e;
 }
 
 header h1 {
   font-size: 20px;
   font-weight: 700;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #34d399;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -58,7 +58,7 @@ header .subtitle {
   width: 32px;
   height: 32px;
   border: 3px solid #2a2a3e;
-  border-top-color: #667eea;
+  border-top-color: #34d399;
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
@@ -149,7 +149,7 @@ header .subtitle {
 .setting-row select:focus,
 .setting-row input:focus {
   outline: none;
-  border-color: #667eea;
+  border-color: #34d399;
 }
 
 .setting-row input[type="range"] {
@@ -165,7 +165,7 @@ header .subtitle {
   -webkit-appearance: none;
   width: 16px;
   height: 16px;
-  background: #667eea;
+  background: #34d399;
   border-radius: 50%;
   cursor: pointer;
 }
@@ -194,7 +194,7 @@ header .subtitle {
 }
 
 .preset-btn.active {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #34d399;
   border-color: transparent;
   color: white;
 }
@@ -230,7 +230,7 @@ header .subtitle {
 .text-btn {
   background: none;
   border: none;
-  color: #667eea;
+  color: #34d399;
   font-size: 12px;
   cursor: pointer;
   padding: 4px 8px;
@@ -292,7 +292,7 @@ header .subtitle {
 }
 
 .image-item.selected {
-  border-color: #667eea;
+  border-color: #34d399;
 }
 
 .image-item img {
@@ -307,7 +307,7 @@ header .subtitle {
   right: 4px;
   width: 20px;
   height: 20px;
-  background: #667eea;
+  background: #34d399;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -363,7 +363,7 @@ header .subtitle {
   align-items: center;
   gap: 8px;
   padding: 10px 20px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #34d399;
   border: none;
   border-radius: 8px;
   color: white;
@@ -448,7 +448,7 @@ header .subtitle {
 
 .progress-fill {
   height: 100%;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #34d399;
   border-radius: 4px;
   width: 0%;
   transition: width 0.3s;
