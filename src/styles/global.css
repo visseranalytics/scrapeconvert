@@ -1,0 +1,29 @@
+@import "tailwindcss";
+
+/* Direction A design tokens (see design-mocks/). Neutral = zinc (Tailwind default),
+   single accent = emerald. Exposed as Tailwind utilities: text-accent-400,
+   bg-accent-400, font-mono, etc. */
+@theme {
+  --color-accent-300: #6ee7b7;
+  --color-accent-400: #34d399;
+  --color-accent-500: #10b981;
+  --color-accent-600: #059669;
+
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+:root {
+  color-scheme: dark;
+}
+
+body {
+  -webkit-font-smoothing: antialiased;
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+}
+
+/* Accessible focus ring everywhere by default; components may override. */
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--color-accent-400);
+  outline-offset: 2px;
+}

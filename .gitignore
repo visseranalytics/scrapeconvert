@@ -22,3 +22,12 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Astro
+.astro/
+
+# Wrangler / Cloudflare
+.wrangler/
+.wrangler-dry/
+.dev.vars
+wrangler.toml.bak

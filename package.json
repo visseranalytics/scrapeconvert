@@ -10,8 +10,8 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "wrangler dev",
-    "deploy": "astro build && wrangler deploy",
-    "deploy:staging": "astro build && wrangler deploy --env staging",
+    "deploy": "astro build && wrangler deploy -c dist/server/wrangler.json",
+    "deploy:staging": "astro build && wrangler deploy -c dist/server/wrangler.json --name scrapeconvert-staging",
     "cleanup-check": "./scripts/cleanup-check.sh",
     "astro": "astro"
   },
@@ -30,9 +30,11 @@
     "uuid": "13.0.0"
   },
   "devDependencies": {
+    "@tailwindcss/vite": "4.3.1",
     "@types/node": "22.14.0",
     "@types/react": "19.2.7",
     "@types/react-dom": "19.2.3",
+    "tailwindcss": "4.3.1",
     "typescript": "5.8.2",
     "wrangler": "4.103.0"
   }
