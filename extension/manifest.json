@@ -2,9 +2,10 @@
   "manifest_version": 3,
   "name": "ScrapeConvert Image Grabber",
   "version": "1.0.0",
-  "description": "Detect, convert, and download images from any webpage in JPEG, PNG, or WebP format",
+  "description": "Find images on the page you are viewing, then convert and download them or send them to the ScrapeConvert workbench.",
   "permissions": [
     "activeTab",
+    "scripting",
     "downloads",
     "storage"
   ],
@@ -35,12 +36,6 @@
       "matches": ["<all_urls>"],
       "js": ["src/content.js"],
       "run_at": "document_idle"
-    }
-  ],
-  "web_accessible_resources": [
-    {
-      "resources": ["src/imageUtils.js"],
-      "matches": ["<all_urls>"]
     }
   ]
 }
