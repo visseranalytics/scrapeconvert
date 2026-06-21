@@ -1,0 +1,9 @@
+# www -> apex (non-www) canonical redirect, applied by the Cloudflare static-assets
+# layer (covers /sitemap.xml, /robots.txt, and every other path).
+#
+# The authoritative www->apex redirect is the zone-level Cloudflare Redirect Rule
+# documented in docs/runbooks/cutover.md (it runs at the edge before assets and the
+# Worker, and is guaranteed to support host-based matching). This file is a
+# code-level backup; if your Workers Assets tier honors host sources, it also
+# handles the redirect on deploy.
+https://www.scrapeconvert.com/* https://scrapeconvert.com/:splat 301

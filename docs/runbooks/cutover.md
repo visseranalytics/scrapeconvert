@@ -86,6 +86,39 @@ Revert the DNS record(s) to the captured Vercel values:
 DNS propagation makes this effective within the TTL. Keep the Vercel project
 deployed until the cutover has been stable for at least 24–48h.
 
+## Canonical host: redirect www → apex (covers /sitemap.xml)
+
+We canonicalize to the apex `scrapeconvert.com`. `www.scrapeconvert.com/*` must
+`301` to `scrapeconvert.com/*` — this is what makes
+`https://www.scrapeconvert.com/sitemap.xml` resolve to the real sitemap.
+
+Both the apex and `www` must point at Cloudflare (proxied DNS record / custom
+domain) so www requests reach the rule below.
+
+Three layers, in order of authority:
+
+1. **Cloudflare Redirect Rule — authoritative; the only layer that reliably
+   covers static assets like `/sitemap.xml` and `/robots.txt`** (it runs at the
+   edge before both the Worker and the assets layer). Dashboard: **Rules →
+   Redirect Rules → Create rule**:
+   - When incoming requests match: `Hostname equals www.scrapeconvert.com`
+   - Then → **Dynamic redirect**:
+     - URL: `concat("https://scrapeconvert.com", http.request.uri.path)`
+     - Status code: `301`, **Preserve query string: on**
+
+   Terraform equivalent: a `cloudflare_ruleset` in the
+   `http_request_dynamic_redirect` phase with the same expression.
+
+2. **`public/_redirects`** (ships with the build, assets layer) as a backup:
+   `https://www.scrapeconvert.com/* https://scrapeconvert.com/:splat 301`.
+
+3. **Astro middleware** (`src/middleware.ts`) — 301s www→apex for SSR routes that
+   reach the Worker (static assets bypass it, hence layer 1).
+
+To flip the canonical to `www` instead: change `CANONICAL_HOST` in
+`src/lib/canonical.ts`, reverse the Redirect Rule + `_redirects`, and update the
+Base `site`, `robots.txt`, and `sitemap.xml` to the `www` host.
+
 ## Captured prior DNS (fill in before cutover)
 
     # type  name                    value                 ttl
