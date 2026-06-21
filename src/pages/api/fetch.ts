@@ -6,6 +6,14 @@ import { requireSecret } from '../../server/turnstile';
 import { isSafePublicUrl } from '../../lib/url-safety';
 import { pinnedFetch, ProxyError, isOwnZoneOrDenied } from '../../server/proxy';
 import { cacheKeyFor, getCached, putCached } from '../../server/cache';
+import {
+  checkBurst,
+  consumeFetchBudget,
+  consumeByteBudget,
+  consumeHostCap,
+  consumeGlobalEgress,
+  type RateLimitContext,
+} from '../../server/budgets';
 
 export const prerender = false;
 
@@ -41,7 +49,7 @@ export async function GET(ctx: APIContext): Promise<Response> {
   if (!target) return err(400, 'missing-url');
   if (type !== 'page' && type !== 'sitemap' && type !== 'image') return err(400, 'bad-type');
 
-  // 3. URL safety + own-zone
+  // 3. URL safety + own-zone / denylist
   const safe = isSafePublicUrl(target);
   if (!safe.ok) return err(400, 'blocked-url:' + safe.reason);
   const denylist = String((e.HOST_DENYLIST as string) ?? '').split(',');
@@ -49,7 +57,18 @@ export async function GET(ctx: APIContext): Promise<Response> {
     return err(400, 'own-zone');
   }
 
-  // 4. Edge cache (text only; never cache 3xx/4xx/5xx). Image bytes stream through.
+  // 4. Budgets: soft per-colo burst throttle + accurate per-token / per-host caps.
+  const kv = e.BUDGETS as KVNamespace;
+  const nonce = verified.claims.nonce;
+  if (await checkBurst({ kv, rl: e.RATE_LIMITER as RateLimitContext['rl'] }, nonce)) return err(429, 'burst', 10);
+  if (await consumeFetchBudget(kv, nonce, Number((e.PER_TOKEN_FETCH_BUDGET as string) ?? '300'))) {
+    return err(429, 'fetch-budget', 60);
+  }
+  if (await consumeHostCap(kv, safe.url.hostname.toLowerCase(), Number((e.PER_HOST_FETCH_CAP as string) ?? '120'))) {
+    return err(429, 'host-cap', 60);
+  }
+
+  // 5. Edge cache (text only; never cache 3xx/4xx/5xx). Image bytes stream through.
   const cache = (caches as unknown as { default?: Cache }).default;
   const key = cacheKeyFor(safe.url);
   if (cache && type !== 'image') {
@@ -57,19 +76,27 @@ export async function GET(ctx: APIContext): Promise<Response> {
     if (hit) return hit;
   }
 
-  // 5. Relay
+  const byteBudget = Number((e.PER_TOKEN_BYTE_BUDGET as string) ?? '524288000');
+  const egressCap = Number((e.GLOBAL_EGRESS_BYTE_CAP as string) ?? '107374182400');
+
+  // 6. Relay
   try {
     const relayed = await pinnedFetch(safe.url, { type });
     if (type === 'image') {
+      // Account the cap as the conservative debit before streaming.
+      const imgCap = Number((e.MAX_IMAGE_BYTES as string) ?? '26214400');
+      await consumeByteBudget(kv, nonce, imgCap, byteBudget);
+      await consumeGlobalEgress(kv, imgCap, egressCap);
       return relayed; // streamed; cap aborts mid-stream
     }
     // page/sitemap: buffer (small, client-parses) so the cap maps cleanly to 413
     const bytes = await relayed.arrayBuffer();
+    if (await consumeByteBudget(kv, nonce, bytes.byteLength, byteBudget)) return err(429, 'byte-budget', 60);
+    await consumeGlobalEgress(kv, bytes.byteLength, egressCap);
     const out = new Response(bytes, { status: 200, headers: relayed.headers });
     if (cache) {
-      const ttl = 3600;
       const maxObj = Number((e.MAX_HTML_BYTES as string) ?? '5242880');
-      return await putCached(cache, key, out, ttl, maxObj);
+      return await putCached(cache, key, out, 3600, maxObj);
     }
     return out;
   } catch (e2) {

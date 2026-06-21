@@ -116,4 +116,54 @@ describe('GET /api/fetch', () => {
     const res = await GET(asCtx(fetchReq('https://example.com/', await validToken(), 'bogus')));
     expect(res.status).toBe(400);
   });
+
+  it('429 when the per-token fetch budget is exhausted', async () => {
+    __setHooks({
+      resolve: async () => ({ ok: true, ips: ['93.184.216.34'] }),
+      connect: async () => {
+        const enc = new TextEncoder();
+        return new ReadableStream<Uint8Array>({
+          pull(c) {
+            c.enqueue(enc.encode('HTTP/1.1 200 OK\r\ncontent-type: text/html\r\n\r\nok'));
+            c.close();
+          },
+        });
+      },
+    });
+    const original = (env as any).PER_TOKEN_FETCH_BUDGET;
+    (env as any).PER_TOKEN_FETCH_BUDGET = '2';
+    const t = await validToken();
+    let last = 200;
+    for (let i = 0; i < 4; i++) {
+      const res = await GET(asCtx(fetchReq('https://example.com/p' + i, t)));
+      last = res.status;
+    }
+    (env as any).PER_TOKEN_FETCH_BUDGET = original;
+    expect(last).toBe(429);
+  });
+
+  it('429 when the per-destination-host cap is hit', async () => {
+    __setHooks({
+      resolve: async () => ({ ok: true, ips: ['93.184.216.34'] }),
+      connect: async () => {
+        const enc = new TextEncoder();
+        return new ReadableStream<Uint8Array>({
+          pull(c) {
+            c.enqueue(enc.encode('HTTP/1.1 200 OK\r\ncontent-type: text/html\r\n\r\nok'));
+            c.close();
+          },
+        });
+      },
+    });
+    const original = (env as any).PER_HOST_FETCH_CAP;
+    (env as any).PER_HOST_FETCH_CAP = '2';
+    let last = 200;
+    for (let i = 0; i < 4; i++) {
+      const t = await mintSession(IP, secret(), 2700);
+      const res = await GET(asCtx(fetchReq('https://victimhost.test/r' + i, t)));
+      last = res.status;
+    }
+    (env as any).PER_HOST_FETCH_CAP = original;
+    expect(last).toBe(429);
+  });
 });
