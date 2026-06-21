@@ -1,10 +1,10 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import type { ScrapedImage, ConvertOptions } from '../../lib/types';
 import {
   loadWorkbench, DEFAULT_CONVERT_OPTIONS, countSelected, visibleImages, type WorkbenchData,
 } from '../../lib/workbench-store';
 import { isSafePublicUrl } from '../../lib/url-safety';
-import { captureDimensions, readTransferSize, headSizeViaProxy } from '../../lib/metadata';
+import { captureDimensions, readTransferSize } from '../../lib/metadata';
 import { flagDuplicates } from '../../lib/dedupe';
 import { estimateSize } from '../../lib/convert/estimate';
 import { pictureSnippet } from '../../lib/picture-snippet';
@@ -20,7 +20,6 @@ const WARN_BYTES = 100 * 1024 * 1024;
 interface WorkbenchDeps {
   convert?: (blob: Blob, opts: ConvertOptions) => Promise<Blob>;
   fetchBytes?: (url: string) => Promise<Blob>;
-  fetchSize?: (url: string) => Promise<number | undefined>;
   zip?: (files: { name: string; blob: Blob }[]) => Promise<Blob>;
   onDownload?: (blob: Blob, filename: string) => void;
   reverify?: () => Promise<boolean>;
@@ -50,17 +49,18 @@ export function Workbench({ initialData, localBlobs, deps = {}, hasSession = tru
 
   const convert = deps.convert ?? convertImage;
   const fetchBytes = deps.fetchBytes ?? (async (url: string) => (await fetchViaProxy(url, 'image')).blob());
-  const fetchSize = deps.fetchSize ?? headSizeViaProxy;
   const zip = deps.zip ?? buildZip;
   const onDownload = deps.onDownload ?? defaultDownload;
-  const sizeLimiter = useRef(createLimiter(4));
-  const sizing = useRef<Set<string>>(new Set());
 
   const renderable = images.filter((i) => i.url.startsWith('blob:') || isSafePublicUrl(i.url).ok);
   const visible = visibleImages(renderable, hideDuplicates);
   const selected = images.filter((i) => i.selected);
   const selectedBytes = selected.reduce((n, i) => n + (i.size ?? 0), 0);
   const estimatedBytes = selected.reduce((n, i) => n + (i.size ? estimateSize(i.size, options) : 0), 0);
+  // Sizes come from the thumbnail's transferSize where the browser exposes it
+  // (same-origin / CORS-timed) and from the file for local uploads; cross-origin
+  // scraped thumbnails report none. Show a dash rather than a misleading 0 B.
+  const anySized = selected.some((i) => i.size != null);
 
   function update(patch: Partial<ConvertOptions>) {
     setOptions((o) => ({ ...o, ...patch }));
@@ -88,54 +88,17 @@ export function Workbench({ initialData, localBlobs, deps = {}, hasSession = tru
       rerender();
     }
   }
-  // Resolve a byte size for an image we're about to count or convert. The free
-  // path (transferSize) is empty for cross-origin scraped thumbnails, so fall
-  // back to a throttled content-length read via the proxy. Bounded to selected
-  // images so we only pay egress for what the totals show and convert anyway.
-  function ensureSize(img: ScrapedImage) {
-    if (img.size != null || sizing.current.has(img.id)) return;
-    const ts = readTransferSize(img.url);
-    if (ts != null) {
-      img.size = ts;
-      flagDuplicates(images);
-      rerender();
-      return;
-    }
-    sizing.current.add(img.id);
-    void sizeLimiter.current(async () => {
-      let size: number | undefined;
-      try {
-        size = await fetchSize(img.url);
-      } finally {
-        sizing.current.delete(img.id);
-      }
-      if (size != null) {
-        img.size = size;
-        flagDuplicates(images);
-        rerender();
-      }
-    });
-  }
   function toggle(id: string) {
     const i = images.find((x) => x.id === id);
     if (i) {
       i.selected = !i.selected;
-      if (i.selected) ensureSize(i);
       rerender();
     }
   }
   function selectAllVisible(on: boolean) {
-    for (const i of visible) {
-      i.selected = on;
-      if (on) ensureSize(i);
-    }
+    for (const i of visible) i.selected = on;
     rerender();
   }
-  // Pre-selected images (e.g. rehydrated from a prior session) need sizes too.
-  useEffect(() => {
-    for (const i of images) if (i.selected) ensureSize(i);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   async function convertAndDownload() {
     if (selected.length === 0) return;
@@ -233,8 +196,8 @@ export function Workbench({ initialData, localBlobs, deps = {}, hasSession = tru
           <section className="rounded-2xl border border-white/10 bg-zinc-900/60 p-4">
             <div className="font-mono text-xs text-zinc-400">
               <div className="flex justify-between"><span>Selected</span><span className="tabular-nums text-zinc-200">{countSelected(images)}</span></div>
-              <div className="flex justify-between"><span>Original</span><span className="tabular-nums">{formatBytes(selectedBytes)}</span></div>
-              <div className="flex justify-between"><span>Estimated after</span><span className="tabular-nums text-accent-300">{formatBytes(estimatedBytes)}</span></div>
+              <div className="flex justify-between"><span>Original</span><span className="tabular-nums">{anySized ? formatBytes(selectedBytes) : '—'}</span></div>
+              <div className="flex justify-between"><span>Estimated after</span><span className="tabular-nums text-accent-300">{anySized ? formatBytes(estimatedBytes) : '—'}</span></div>
             </div>
             {selectedBytes > WARN_BYTES && (
               <p className="mt-2 rounded-md border border-amber-400/30 bg-amber-400/10 px-2 py-1 font-mono text-[11px] text-amber-300" role="alert">

@@ -87,10 +87,14 @@ describe('Workbench', () => {
     expect(screen.getByRole('alert')).toBeTruthy();
   });
 
-  it('resolves missing byte sizes for selected images so the totals are not 0', async () => {
-    const fetchSize = vi.fn(async () => 2 * 1024 * 1024);
-    render(<Workbench initialData={data([img('a', { selected: true, size: undefined })])} deps={{ fetchSize }} />);
-    await waitFor(() => expect(fetchSize).toHaveBeenCalledWith('https://e.com/a.png'));
-    await waitFor(() => expect(screen.getByText('Original').nextElementSibling?.textContent).toBe('2.0 MB'));
+  it('shows a dash (not 0 B) for totals when selected images have no known size', () => {
+    render(<Workbench initialData={data([img('a', { selected: true, size: undefined })])} />);
+    expect(screen.getByText('Original').nextElementSibling?.textContent).toBe('—');
+    expect(screen.getByText('Estimated after').nextElementSibling?.textContent).toBe('—');
+  });
+
+  it('shows real byte totals when selected images carry a size (e.g. local uploads)', () => {
+    render(<Workbench initialData={data([img('a', { selected: true, size: 2 * 1024 * 1024 })])} />);
+    expect(screen.getByText('Original').nextElementSibling?.textContent).toBe('2.0 MB');
   });
 });
