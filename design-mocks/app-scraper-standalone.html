@@ -1,0 +1,326 @@
+<!doctype html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ScrapeConvert: Scraper</title>
+  <meta name="description" content="Paste a page, a list of pages, or a sitemap. ScrapeConvert finds the images and hands them to the Workbench. Public images only, conversion runs in your browser." />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+
+  
+  
+  
+<style>
+
+    html { -webkit-font-smoothing: antialiased; }
+    body { font-feature-settings: "cv02","cv03","cv04","cv11"; }
+    /* subtle dotted grid, drawn with CSS not an image */
+    .grid-bg {
+      background-image: radial-gradient(rgba(255,255,255,0.05) 1px, transparent 1px);
+      background-size: 28px 28px;
+      background-position: -1px -1px;
+    }
+    .tnum { font-variant-numeric: tabular-nums; }
+    /* crawl progress bar shimmer */
+    .crawl-bar { background: linear-gradient(90deg, #34d399, #6ee7b7, #34d399); background-size: 200% 100%; animation: crawl-move 1.4s linear infinite; }
+    @keyframes crawl-move { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+    /* pulsing dot for in-progress rows */
+    .pulse-dot { animation: pulse-soft 1.4s ease-in-out infinite; }
+    @keyframes pulse-soft { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+    @media (prefers-reduced-motion: reduce) { .crawl-bar, .pulse-dot { animation: none; } }
+  
+
+/* ---- */
+
+*, ::before, ::after{--tw-border-spacing-x:0;--tw-border-spacing-y:0;--tw-translate-x:0;--tw-translate-y:0;--tw-rotate:0;--tw-skew-x:0;--tw-skew-y:0;--tw-scale-x:1;--tw-scale-y:1;--tw-pan-x: ;--tw-pan-y: ;--tw-pinch-zoom: ;--tw-scroll-snap-strictness:proximity;--tw-gradient-from-position: ;--tw-gradient-via-position: ;--tw-gradient-to-position: ;--tw-ordinal: ;--tw-slashed-zero: ;--tw-numeric-figure: ;--tw-numeric-spacing: ;--tw-numeric-fraction: ;--tw-ring-inset: ;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-color:rgb(59 130 246 / 0.5);--tw-ring-offset-shadow:0 0 #0000;--tw-ring-shadow:0 0 #0000;--tw-shadow:0 0 #0000;--tw-shadow-colored:0 0 #0000;--tw-blur: ;--tw-brightness: ;--tw-contrast: ;--tw-grayscale: ;--tw-hue-rotate: ;--tw-invert: ;--tw-saturate: ;--tw-sepia: ;--tw-drop-shadow: ;--tw-backdrop-blur: ;--tw-backdrop-brightness: ;--tw-backdrop-contrast: ;--tw-backdrop-grayscale: ;--tw-backdrop-hue-rotate: ;--tw-backdrop-invert: ;--tw-backdrop-opacity: ;--tw-backdrop-saturate: ;--tw-backdrop-sepia: ;--tw-contain-size: ;--tw-contain-layout: ;--tw-contain-paint: ;--tw-contain-style: }::backdrop{--tw-border-spacing-x:0;--tw-border-spacing-y:0;--tw-translate-x:0;--tw-translate-y:0;--tw-rotate:0;--tw-skew-x:0;--tw-skew-y:0;--tw-scale-x:1;--tw-scale-y:1;--tw-pan-x: ;--tw-pan-y: ;--tw-pinch-zoom: ;--tw-scroll-snap-strictness:proximity;--tw-gradient-from-position: ;--tw-gradient-via-position: ;--tw-gradient-to-position: ;--tw-ordinal: ;--tw-slashed-zero: ;--tw-numeric-figure: ;--tw-numeric-spacing: ;--tw-numeric-fraction: ;--tw-ring-inset: ;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-color:rgb(59 130 246 / 0.5);--tw-ring-offset-shadow:0 0 #0000;--tw-ring-shadow:0 0 #0000;--tw-shadow:0 0 #0000;--tw-shadow-colored:0 0 #0000;--tw-blur: ;--tw-brightness: ;--tw-contrast: ;--tw-grayscale: ;--tw-hue-rotate: ;--tw-invert: ;--tw-saturate: ;--tw-sepia: ;--tw-drop-shadow: ;--tw-backdrop-blur: ;--tw-backdrop-brightness: ;--tw-backdrop-contrast: ;--tw-backdrop-grayscale: ;--tw-backdrop-hue-rotate: ;--tw-backdrop-invert: ;--tw-backdrop-opacity: ;--tw-backdrop-saturate: ;--tw-backdrop-sepia: ;--tw-contain-size: ;--tw-contain-layout: ;--tw-contain-paint: ;--tw-contain-style: }/* ! tailwindcss v3.4.17 | MIT License | https://tailwindcss.com */*,::after,::before{box-sizing:border-box;border-width:0;border-style:solid;border-color:#e5e7eb}::after,::before{--tw-content:''}:host,html{line-height:1.5;-webkit-text-size-adjust:100%;-moz-tab-size:4;tab-size:4;font-family:Inter, ui-sans-serif, system-ui, sans-serif;font-feature-settings:normal;font-variation-settings:normal;-webkit-tap-highlight-color:transparent}body{margin:0;line-height:inherit}hr{height:0;color:inherit;border-top-width:1px}abbr:where([title]){-webkit-text-decoration:underline dotted;text-decoration:underline dotted}h1,h2,h3,h4,h5,h6{font-size:inherit;font-weight:inherit}a{color:inherit;text-decoration:inherit}b,strong{font-weight:bolder}code,kbd,pre,samp{font-family:"JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;font-feature-settings:normal;font-variation-settings:normal;font-size:1em}small{font-size:80%}sub,sup{font-size:75%;line-height:0;position:relative;vertical-align:baseline}sub{bottom:-.25em}sup{top:-.5em}table{text-indent:0;border-color:inherit;border-collapse:collapse}button,input,optgroup,select,textarea{font-family:inherit;font-feature-settings:inherit;font-variation-settings:inherit;font-size:100%;font-weight:inherit;line-height:inherit;letter-spacing:inherit;color:inherit;margin:0;padding:0}button,select{text-transform:none}button,input:where([type=button]),input:where([type=reset]),input:where([type=submit]){-webkit-appearance:button;background-color:transparent;background-image:none}:-moz-focusring{outline:auto}:-moz-ui-invalid{box-shadow:none}progress{vertical-align:baseline}::-webkit-inner-spin-button,::-webkit-outer-spin-button{height:auto}[type=search]{-webkit-appearance:textfield;outline-offset:-2px}::-webkit-search-decoration{-webkit-appearance:none}::-webkit-file-upload-button{-webkit-appearance:button;font:inherit}summary{display:list-item}blockquote,dd,dl,figure,h1,h2,h3,h4,h5,h6,hr,p,pre{margin:0}fieldset{margin:0;padding:0}legend{padding:0}menu,ol,ul{list-style:none;margin:0;padding:0}dialog{padding:0}textarea{resize:vertical}input::placeholder,textarea::placeholder{opacity:1;color:#9ca3af}[role=button],button{cursor:pointer}:disabled{cursor:default}audio,canvas,embed,iframe,img,object,svg,video{display:block;vertical-align:middle}img,video{max-width:100%;height:auto}[hidden]:where(:not([hidden=until-found])){display:none}.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0, 0, 0, 0);white-space:nowrap;border-width:0}.pointer-events-none{pointer-events:none}.absolute{position:absolute}.relative{position:relative}.sticky{position:sticky}.inset-x-0{left:0px;right:0px}.top-0{top:0px}.z-40{z-index:40}.mx-auto{margin-left:auto;margin-right:auto}.mb-1\.5{margin-bottom:0.375rem}.mb-3{margin-bottom:0.75rem}.mt-0\.5{margin-top:0.125rem}.mt-10{margin-top:2.5rem}.mt-2{margin-top:0.5rem}.mt-3{margin-top:0.75rem}.mt-4{margin-top:1rem}.mt-5{margin-top:1.25rem}.mt-8{margin-top:2rem}.block{display:block}.flex{display:flex}.inline-flex{display:inline-flex}.grid{display:grid}.hidden{display:none}.h-1\.5{height:0.375rem}.h-14{height:3.5rem}.h-3{height:0.75rem}.h-3\.5{height:0.875rem}.h-4{height:1rem}.h-5{height:1.25rem}.h-6{height:1.5rem}.h-7{height:1.75rem}.h-\[420px\]{height:420px}.h-full{height:100%}.w-1\.5{width:0.375rem}.w-12{width:3rem}.w-16{width:4rem}.w-3{width:0.75rem}.w-3\.5{width:0.875rem}.w-4{width:1rem}.w-5{width:1.25rem}.w-6{width:1.5rem}.w-7{width:1.75rem}.w-\[17\%\]{width:17%}.w-full{width:100%}.min-w-0{min-width:0px}.max-w-2xl{max-width:42rem}.max-w-3xl{max-width:48rem}.max-w-7xl{max-width:80rem}.flex-1{flex:1 1 0%}.shrink-0{flex-shrink:0}.grid-cols-1{grid-template-columns:repeat(1, minmax(0, 1fr))}.flex-col{flex-direction:column}.flex-wrap{flex-wrap:wrap}.items-center{align-items:center}.justify-center{justify-content:center}.justify-between{justify-content:space-between}.gap-1{gap:0.25rem}.gap-1\.5{gap:0.375rem}.gap-2{gap:0.5rem}.gap-2\.5{gap:0.625rem}.gap-3{gap:0.75rem}.gap-4{gap:1rem}.space-y-1\.5 > :not([hidden]) ~ :not([hidden]){--tw-space-y-reverse:0;margin-top:calc(0.375rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(0.375rem * var(--tw-space-y-reverse))}.divide-y > :not([hidden]) ~ :not([hidden]){--tw-divide-y-reverse:0;border-top-width:calc(1px * calc(1 - var(--tw-divide-y-reverse)));border-bottom-width:calc(1px * var(--tw-divide-y-reverse))}.divide-white\/10 > :not([hidden]) ~ :not([hidden]){border-color:rgb(255 255 255 / 0.1)}.self-start{align-self:flex-start}.overflow-hidden{overflow:hidden}.scroll-smooth{scroll-behavior:smooth}.truncate{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.rounded{border-radius:0.25rem}.rounded-2xl{border-radius:1rem}.rounded-full{border-radius:9999px}.rounded-lg{border-radius:0.5rem}.rounded-md{border-radius:0.375rem}.rounded-xl{border-radius:0.75rem}.border{border-width:1px}.border-x{border-left-width:1px;border-right-width:1px}.border-b{border-bottom-width:1px}.border-t{border-top-width:1px}.border-accent-400\/30{border-color:rgb(52 211 153 / 0.3)}.border-accent-400\/40{border-color:rgb(52 211 153 / 0.4)}.border-white\/10{border-color:rgb(255 255 255 / 0.1)}.border-white\/15{border-color:rgb(255 255 255 / 0.15)}.bg-accent-400{--tw-bg-opacity:1;background-color:rgb(52 211 153 / var(--tw-bg-opacity, 1))}.bg-accent-400\/10{background-color:rgb(52 211 153 / 0.1)}.bg-accent-400\/\[0\.05\]{background-color:rgb(52 211 153 / 0.05)}.bg-transparent{background-color:transparent}.bg-zinc-800{--tw-bg-opacity:1;background-color:rgb(39 39 42 / var(--tw-bg-opacity, 1))}.bg-zinc-900{--tw-bg-opacity:1;background-color:rgb(24 24 27 / var(--tw-bg-opacity, 1))}.bg-zinc-900\/40{background-color:rgb(24 24 27 / 0.4)}.bg-zinc-900\/60{background-color:rgb(24 24 27 / 0.6)}.bg-zinc-950{--tw-bg-opacity:1;background-color:rgb(9 9 11 / var(--tw-bg-opacity, 1))}.bg-zinc-950\/80{background-color:rgb(9 9 11 / 0.8)}.p-1{padding:0.25rem}.p-3{padding:0.75rem}.p-4{padding:1rem}.p-5{padding:1.25rem}.px-1{padding-left:0.25rem;padding-right:0.25rem}.px-2{padding-left:0.5rem;padding-right:0.5rem}.px-2\.5{padding-left:0.625rem;padding-right:0.625rem}.px-3{padding-left:0.75rem;padding-right:0.75rem}.px-4{padding-left:1rem;padding-right:1rem}.px-5{padding-left:1.25rem;padding-right:1.25rem}.py-0\.5{padding-top:0.125rem;padding-bottom:0.125rem}.py-1{padding-top:0.25rem;padding-bottom:0.25rem}.py-1\.5{padding-top:0.375rem;padding-bottom:0.375rem}.py-12{padding-top:3rem;padding-bottom:3rem}.py-2{padding-top:0.5rem;padding-bottom:0.5rem}.py-2\.5{padding-top:0.625rem;padding-bottom:0.625rem}.py-3{padding-top:0.75rem;padding-bottom:0.75rem}.text-center{text-align:center}.text-right{text-align:right}.font-mono{font-family:"JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace}.font-sans{font-family:Inter, ui-sans-serif, system-ui, sans-serif}.text-3xl{font-size:1.875rem;line-height:2.25rem}.text-\[11px\]{font-size:11px}.text-\[12px\]{font-size:12px}.text-\[15px\]{font-size:15px}.text-base{font-size:1rem;line-height:1.5rem}.text-sm{font-size:0.875rem;line-height:1.25rem}.text-xs{font-size:0.75rem;line-height:1rem}.font-medium{font-weight:500}.font-semibold{font-weight:600}.uppercase{text-transform:uppercase}.leading-relaxed{line-height:1.625}.leading-tight{line-height:1.25}.tracking-tight{letter-spacing:-0.025em}.tracking-wider{letter-spacing:0.05em}.tracking-widest{letter-spacing:0.1em}.text-accent-300{--tw-text-opacity:1;color:rgb(110 231 183 / var(--tw-text-opacity, 1))}.text-accent-400{--tw-text-opacity:1;color:rgb(52 211 153 / var(--tw-text-opacity, 1))}.text-amber-400{--tw-text-opacity:1;color:rgb(251 191 36 / var(--tw-text-opacity, 1))}.text-zinc-200{--tw-text-opacity:1;color:rgb(228 228 231 / var(--tw-text-opacity, 1))}.text-zinc-300{--tw-text-opacity:1;color:rgb(212 212 216 / var(--tw-text-opacity, 1))}.text-zinc-400{--tw-text-opacity:1;color:rgb(161 161 170 / var(--tw-text-opacity, 1))}.text-zinc-50{--tw-text-opacity:1;color:rgb(250 250 250 / var(--tw-text-opacity, 1))}.text-zinc-500{--tw-text-opacity:1;color:rgb(113 113 122 / var(--tw-text-opacity, 1))}.text-zinc-600{--tw-text-opacity:1;color:rgb(82 82 91 / var(--tw-text-opacity, 1))}.text-zinc-950{--tw-text-opacity:1;color:rgb(9 9 11 / var(--tw-text-opacity, 1))}.antialiased{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}.backdrop-blur{--tw-backdrop-blur:blur(8px);-webkit-backdrop-filter:var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia);backdrop-filter:var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia)}.transition-colors{transition-property:color, background-color, border-color, fill, stroke, -webkit-text-decoration-color;transition-property:color, background-color, border-color, text-decoration-color, fill, stroke;transition-property:color, background-color, border-color, text-decoration-color, fill, stroke, -webkit-text-decoration-color;transition-timing-function:cubic-bezier(0.4, 0, 0.2, 1);transition-duration:150ms}.duration-150{transition-duration:150ms}.\[mask-image\:radial-gradient\(ellipse_at_top\2c black\2c transparent_75\%\)\]{-webkit-mask-image:radial-gradient(ellipse at top,black,transparent 75%);mask-image:radial-gradient(ellipse at top,black,transparent 75%)}.selection\:bg-accent-400\/20 *::selection{background-color:rgb(52 211 153 / 0.2)}.selection\:text-accent-300 *::selection{--tw-text-opacity:1;color:rgb(110 231 183 / var(--tw-text-opacity, 1))}.selection\:bg-accent-400\/20::selection{background-color:rgb(52 211 153 / 0.2)}.selection\:text-accent-300::selection{--tw-text-opacity:1;color:rgb(110 231 183 / var(--tw-text-opacity, 1))}.placeholder\:text-zinc-600::placeholder{--tw-text-opacity:1;color:rgb(82 82 91 / var(--tw-text-opacity, 1))}.focus-within\:ring-2:focus-within{--tw-ring-offset-shadow:var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);--tw-ring-shadow:var(--tw-ring-inset) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color);box-shadow:var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 #0000)}.focus-within\:ring-accent-400:focus-within{--tw-ring-opacity:1;--tw-ring-color:rgb(52 211 153 / var(--tw-ring-opacity, 1))}.focus-within\:ring-offset-2:focus-within{--tw-ring-offset-width:2px}.focus-within\:ring-offset-zinc-950:focus-within{--tw-ring-offset-color:#09090b}.hover\:border-white\/15:hover{border-color:rgb(255 255 255 / 0.15)}.hover\:bg-accent-300:hover{--tw-bg-opacity:1;background-color:rgb(110 231 183 / var(--tw-bg-opacity, 1))}.hover\:bg-zinc-800:hover{--tw-bg-opacity:1;background-color:rgb(39 39 42 / var(--tw-bg-opacity, 1))}.hover\:text-zinc-100:hover{--tw-text-opacity:1;color:rgb(244 244 245 / var(--tw-text-opacity, 1))}.focus\:not-sr-only:focus{position:static;width:auto;height:auto;padding:0;margin:0;overflow:visible;clip:auto;white-space:normal}.focus\:absolute:focus{position:absolute}.focus\:left-4:focus{left:1rem}.focus\:top-4:focus{top:1rem}.focus\:z-50:focus{z-index:50}.focus\:rounded-lg:focus{border-radius:0.5rem}.focus\:bg-accent-400:focus{--tw-bg-opacity:1;background-color:rgb(52 211 153 / var(--tw-bg-opacity, 1))}.focus\:px-4:focus{padding-left:1rem;padding-right:1rem}.focus\:py-2:focus{padding-top:0.5rem;padding-bottom:0.5rem}.focus\:text-sm:focus{font-size:0.875rem;line-height:1.25rem}.focus\:font-medium:focus{font-weight:500}.focus\:text-zinc-950:focus{--tw-text-opacity:1;color:rgb(9 9 11 / var(--tw-text-opacity, 1))}.focus\:outline-none:focus{outline:2px solid transparent;outline-offset:2px}.focus-visible\:ring-2:focus-visible{--tw-ring-offset-shadow:var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);--tw-ring-shadow:var(--tw-ring-inset) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color);box-shadow:var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 #0000)}.focus-visible\:ring-accent-400:focus-visible{--tw-ring-opacity:1;--tw-ring-color:rgb(52 211 153 / var(--tw-ring-opacity, 1))}.focus-visible\:ring-offset-2:focus-visible{--tw-ring-offset-width:2px}.focus-visible\:ring-offset-zinc-950:focus-visible{--tw-ring-offset-color:#09090b}@supports ((-webkit-backdrop-filter: var(--tw)) or (backdrop-filter: var(--tw))){.supports-\[backdrop-filter\]\:bg-zinc-950\/70{background-color:rgb(9 9 11 / 0.7)}}@media (min-width: 640px){.sm\:flex{display:flex}.sm\:grid-cols-3{grid-template-columns:repeat(3, minmax(0, 1fr))}.sm\:flex-row{flex-direction:row}.sm\:items-start{align-items:flex-start}.sm\:items-center{align-items:center}.sm\:justify-between{justify-content:space-between}.sm\:gap-4{gap:1rem}.sm\:self-auto{align-self:auto}.sm\:p-5{padding:1.25rem}.sm\:p-6{padding:1.5rem}.sm\:px-6{padding-left:1.5rem;padding-right:1.5rem}.sm\:py-16{padding-top:4rem;padding-bottom:4rem}.sm\:text-4xl{font-size:2.25rem;line-height:2.5rem}}@media (min-width: 1024px){.lg\:px-8{padding-left:2rem;padding-right:2rem}}
+</style>
+</head>
+
+<body class="bg-zinc-950 text-zinc-300 font-sans antialiased selection:bg-accent-400/20 selection:text-accent-300">
+
+  <!-- Skip link -->
+  <a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-accent-400 focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-zinc-950">Skip to content</a>
+
+  <!-- ============ APP TOP BAR ============ -->
+  <header class="sticky top-0 z-40 border-b border-white/10 bg-zinc-950/80 backdrop-blur supports-[backdrop-filter]:bg-zinc-950/70">
+    <nav class="mx-auto flex h-14 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8" aria-label="Primary">
+      <!-- wordmark -->
+      <a href="#" class="group flex shrink-0 items-center gap-2.5 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950">
+        <span class="flex h-7 w-7 items-center justify-center rounded-md border border-accent-400/40 bg-accent-400/10">
+          <svg viewBox="0 0 24 24" class="h-4 w-4 text-accent-400" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M8 4 4 12l4 8" /><path d="m13 8 4 4-4 4" />
+          </svg>
+        </span>
+        <span class="font-mono text-[15px] font-semibold tracking-tight text-zinc-50">ScrapeConvert</span>
+      </a>
+
+      <!-- center app tabs -->
+      <div class="flex items-center gap-1">
+        <a href="#" aria-current="page" class="rounded-lg border border-accent-400/30 bg-accent-400/10 px-3 py-1.5 font-mono text-sm text-accent-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950">Scraper</a>
+        <a href="app-workbench.html" class="rounded-lg px-3 py-1.5 font-mono text-sm text-zinc-400 transition-colors duration-150 hover:text-zinc-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950">Workbench</a>
+      </div>
+
+      <!-- right: github + session chip -->
+      <div class="flex shrink-0 items-center gap-3">
+        <a href="https://github.com/scrapeconvert" class="hidden items-center gap-1.5 rounded-lg px-2 py-1.5 text-sm text-zinc-400 transition-colors duration-150 hover:text-zinc-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950 sm:flex">
+          <svg viewBox="0 0 24 24" class="h-4 w-4" fill="currentColor" aria-hidden="true"><path d="M12 .5A11.5 11.5 0 0 0 .5 12a11.5 11.5 0 0 0 7.86 10.92c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.53-1.34-1.29-1.7-1.29-1.7-1.05-.72.08-.7.08-.7 1.16.08 1.78 1.2 1.78 1.2 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.56-.3-5.25-1.28-5.25-5.7 0-1.26.45-2.29 1.19-3.1-.12-.3-.52-1.48.11-3.08 0 0 .97-.31 3.18 1.18a11 11 0 0 1 5.8 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.6.23 2.78.11 3.08.74.81 1.19 1.84 1.19 3.1 0 4.43-2.7 5.4-5.27 5.69.41.36.78 1.06.78 2.14v3.18c0 .31.21.67.8.56A11.5 11.5 0 0 0 23.5 12 11.5 11.5 0 0 0 12 .5Z"/></svg>
+          GitHub
+        </a>
+        <span class="inline-flex items-center gap-1.5 rounded-full border border-accent-400/30 bg-accent-400/10 px-2.5 py-1 font-mono text-[11px] text-accent-300">
+          <span class="h-1.5 w-1.5 rounded-full bg-accent-400"></span>
+          verified
+        </span>
+      </div>
+    </nav>
+  </header>
+
+  <main id="main" class="relative">
+    <!-- soft dotted grid behind the entry area -->
+    <div class="grid-bg pointer-events-none absolute inset-x-0 top-0 h-[420px] [mask-image:radial-gradient(ellipse_at_top,black,transparent_75%)]" aria-hidden="true"></div>
+
+    <div class="relative mx-auto max-w-3xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
+
+      <!-- heading -->
+      <div class="mx-auto max-w-2xl text-center">
+        <span class="font-mono text-xs font-medium uppercase tracking-widest text-accent-400">Scraper</span>
+        <h1 class="mt-3 text-3xl font-semibold leading-tight tracking-tight text-zinc-50 sm:text-4xl">Tell it where to pull images from.</h1>
+        <p class="mt-4 text-base leading-relaxed text-zinc-400">
+          Paste one page, a list of pages, or a sitemap. ScrapeConvert finds the images and hands them to the Workbench, where you flag duplicates, convert, and download.
+        </p>
+      </div>
+
+      <!-- ============ INPUT CARD ============ -->
+      <section class="mt-10 rounded-2xl border border-white/10 bg-zinc-900/60 p-5 sm:p-6" aria-label="Scrape source">
+
+        <!-- segmented control: 3 modes -->
+        <div role="tablist" aria-label="Scrape mode" class="grid grid-cols-1 gap-2 rounded-lg border border-white/10 bg-zinc-950 p-1 sm:grid-cols-3">
+          <button role="tab" aria-selected="true" type="button" class="flex items-center justify-center gap-2 rounded-md border border-accent-400/30 bg-accent-400/10 px-3 py-2 font-mono text-sm text-accent-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950">
+            <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>
+            Single page
+          </button>
+          <button role="tab" aria-selected="false" type="button" class="flex items-center justify-center gap-2 rounded-md px-3 py-2 font-mono text-sm text-zinc-400 transition-colors duration-150 hover:text-zinc-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950">
+            <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+            Multiple URLs
+          </button>
+          <button role="tab" aria-selected="false" type="button" class="flex items-center justify-center gap-2 rounded-md px-3 py-2 font-mono text-sm text-zinc-400 transition-colors duration-150 hover:text-zinc-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950">
+            <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M6 9v6"/><path d="M11 6h7"/><path d="M11 18h7"/><path d="M18 6v4"/><path d="M18 14v4"/></svg>
+            Sitemap crawl
+          </button>
+        </div>
+
+        <!-- URL input (single page / sitemap = single line; multiple = textarea) -->
+        <div class="mt-4">
+          <label for="scrape-url" class="mb-1.5 block font-mono text-[11px] uppercase tracking-wider text-zinc-500">Sitemap URL</label>
+          <div class="flex items-center gap-2 rounded-lg border border-white/15 bg-zinc-950 px-3 py-2.5 focus-within:ring-2 focus-within:ring-accent-400 focus-within:ring-offset-2 focus-within:ring-offset-zinc-950">
+            <svg viewBox="0 0 24 24" class="h-4 w-4 shrink-0 text-zinc-500" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.07 0l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.07 0l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+            <input id="scrape-url" type="url" inputmode="url" autocomplete="off" placeholder="https://example.com/sitemap.xml" class="w-full bg-transparent font-mono text-sm text-zinc-200 placeholder:text-zinc-600 focus:outline-none" />
+          </div>
+
+          <!-- textarea variant shown for "Multiple URLs" mode -->
+          <div class="mt-3 hidden" data-mode="multiple">
+            <label for="scrape-urls" class="mb-1.5 block font-mono text-[11px] uppercase tracking-wider text-zinc-500">One URL per line</label>
+            <textarea id="scrape-urls" rows="4" placeholder="https://example.com/about&#10;https://example.com/team&#10;https://example.com/work" class="w-full rounded-lg border border-white/15 bg-zinc-950 px-3 py-2.5 font-mono text-sm text-zinc-200 placeholder:text-zinc-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950"></textarea>
+          </div>
+        </div>
+
+        <!-- advanced row: max pages (sitemap mode) -->
+        <div class="mt-3 flex flex-col gap-2 rounded-lg border border-white/10 bg-zinc-950 px-3 py-2.5 sm:flex-row sm:items-center sm:justify-between" data-mode="sitemap">
+          <label for="max-pages" class="flex items-center gap-2 font-mono text-xs text-zinc-400">
+            <svg viewBox="0 0 24 24" class="h-3.5 w-3.5 text-zinc-500" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+            Max pages to crawl
+          </label>
+          <div class="inline-flex items-center overflow-hidden rounded-md border border-white/10 bg-zinc-900">
+            <button type="button" aria-label="Decrease max pages" class="px-2.5 py-1 text-zinc-400 transition-colors duration-150 hover:text-zinc-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950">
+              <svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"/></svg>
+            </button>
+            <input id="max-pages" type="text" inputmode="numeric" value="100" class="tnum w-12 border-x border-white/10 bg-transparent py-1 text-center font-mono text-sm text-zinc-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950" />
+            <button type="button" aria-label="Increase max pages" class="px-2.5 py-1 text-zinc-400 transition-colors duration-150 hover:text-zinc-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950">
+              <svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- primary action + bot-check line -->
+        <div class="mt-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <button type="button" class="inline-flex items-center justify-center gap-2 rounded-lg bg-accent-400 px-5 py-2.5 text-sm font-medium text-zinc-950 transition-colors duration-150 hover:bg-accent-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950">
+            <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+            Find images
+          </button>
+
+          <!-- subtle one-time bot check, already passed this session -->
+          <span class="inline-flex items-center gap-2 self-start rounded-lg border border-white/10 bg-zinc-950 px-2.5 py-1.5 font-mono text-[11px] text-zinc-400 sm:self-auto">
+            <span class="flex h-4 w-4 items-center justify-center rounded border border-accent-400/30 bg-accent-400/10 text-accent-400">
+              <svg viewBox="0 0 24 24" class="h-3 w-3" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+            </span>
+            Verified this session
+          </span>
+        </div>
+      </section>
+
+      <!-- ============ HELPER / EXAMPLE LINE ============ -->
+      <div class="mt-4 flex flex-col gap-2 rounded-xl border border-white/10 bg-zinc-900/40 p-4 sm:flex-row sm:items-start sm:gap-4">
+        <span class="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-md border border-accent-400/30 bg-accent-400/10 text-accent-400">
+          <svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+        </span>
+        <div class="min-w-0">
+          <p class="text-sm leading-relaxed text-zinc-400">
+            Reads visible <code class="rounded bg-zinc-950 px-1 py-0.5 font-mono text-[12px] text-zinc-300">&lt;img&gt;</code> tags and CSS <code class="rounded bg-zinc-950 px-1 py-0.5 font-mono text-[12px] text-zinc-300">background-image</code>. Public images only.
+          </p>
+          <div class="mt-2 flex flex-wrap items-center gap-2">
+            <span class="font-mono text-[11px] text-zinc-500">Try</span>
+            <button type="button" class="rounded-md border border-white/10 bg-zinc-950 px-2 py-1 font-mono text-[11px] text-zinc-300 transition-colors duration-150 hover:border-white/15 hover:text-zinc-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950">https://example.com</button>
+            <button type="button" class="rounded-md border border-white/10 bg-zinc-950 px-2 py-1 font-mono text-[11px] text-zinc-300 transition-colors duration-150 hover:border-white/15 hover:text-zinc-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950">https://example.com/sitemap.xml</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============ LIVE CRAWL PANEL ============ -->
+      <section class="mt-8" aria-label="Crawl in progress">
+        <div class="mb-3 flex items-center justify-between">
+          <h2 class="flex items-center gap-2 font-mono text-xs uppercase tracking-widest text-zinc-400">
+            <span class="h-1.5 w-1.5 rounded-full bg-accent-400 pulse-dot"></span>
+            Crawling
+          </h2>
+          <span class="font-mono text-[11px] text-zinc-500">started <span class="tnum">0:12</span> ago</span>
+        </div>
+
+        <div class="overflow-hidden rounded-2xl border border-white/10 bg-zinc-900/60">
+
+          <!-- sitemap discovery checklist -->
+          <div class="border-b border-white/10 p-4 sm:p-5">
+            <p class="mb-3 font-mono text-[11px] uppercase tracking-wider text-zinc-500">Sitemap discovery</p>
+            <ul class="space-y-1.5">
+              <!-- found -->
+              <li class="flex items-center gap-3 rounded-lg bg-zinc-950 px-3 py-2">
+                <span class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-accent-400/30 bg-accent-400/10 text-accent-400">
+                  <svg viewBox="0 0 24 24" class="h-3 w-3" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+                </span>
+                <span class="min-w-0 flex-1 truncate font-mono text-xs text-zinc-300">/sitemap.xml</span>
+                <span class="font-mono text-[11px] text-accent-300">found</span>
+              </li>
+              <!-- found -->
+              <li class="flex items-center gap-3 rounded-lg bg-zinc-950 px-3 py-2">
+                <span class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-accent-400/30 bg-accent-400/10 text-accent-400">
+                  <svg viewBox="0 0 24 24" class="h-3 w-3" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+                </span>
+                <span class="min-w-0 flex-1 truncate font-mono text-xs text-zinc-300">/robots.txt</span>
+                <span class="font-mono text-[11px] text-accent-300">found</span>
+              </li>
+              <!-- checking -->
+              <li class="flex items-center gap-3 rounded-lg bg-zinc-950 px-3 py-2">
+                <span class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-white/10 bg-zinc-900 text-zinc-400">
+                  <svg viewBox="0 0 24 24" class="h-3 w-3 pulse-dot" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>
+                </span>
+                <span class="min-w-0 flex-1 truncate font-mono text-xs text-zinc-300">/sitemap_index.xml</span>
+                <span class="font-mono text-[11px] text-zinc-400">checking</span>
+              </li>
+              <!-- not found -->
+              <li class="flex items-center gap-3 rounded-lg bg-zinc-950 px-3 py-2">
+                <span class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-white/10 bg-zinc-900 text-zinc-600">
+                  <svg viewBox="0 0 24 24" class="h-3 w-3" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"/></svg>
+                </span>
+                <span class="min-w-0 flex-1 truncate font-mono text-xs text-zinc-500">/sitemap-news.xml</span>
+                <span class="font-mono text-[11px] text-zinc-600">not found</span>
+              </li>
+            </ul>
+          </div>
+
+          <!-- crawl log -->
+          <div class="p-4 sm:p-5">
+            <div class="mb-3 flex items-center justify-between">
+              <p class="font-mono text-[11px] uppercase tracking-wider text-zinc-500">Crawl log</p>
+              <span class="font-mono text-[11px] text-zinc-500">page <span class="tnum text-zinc-300">24</span> / <span class="tnum text-zinc-300">142</span></span>
+            </div>
+
+            <ul class="divide-y divide-white/10 overflow-hidden rounded-lg border border-white/10">
+              <!-- done -->
+              <li class="flex items-center gap-3 bg-zinc-950 px-3 py-2.5">
+                <span class="flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-accent-400">
+                  <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+                </span>
+                <span class="min-w-0 flex-1 truncate font-mono text-[11px] text-zinc-400">/work/case-studies</span>
+                <span class="tnum w-16 text-right font-mono text-[11px] text-zinc-500">28 images</span>
+                <span class="w-16 text-right font-mono text-[11px] text-zinc-500">done</span>
+              </li>
+              <!-- done -->
+              <li class="flex items-center gap-3 bg-zinc-950 px-3 py-2.5">
+                <span class="flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-accent-400">
+                  <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+                </span>
+                <span class="min-w-0 flex-1 truncate font-mono text-[11px] text-zinc-400">/about/team</span>
+                <span class="tnum w-16 text-right font-mono text-[11px] text-zinc-500">14 images</span>
+                <span class="w-16 text-right font-mono text-[11px] text-zinc-500">done</span>
+              </li>
+              <!-- crawling -->
+              <li class="flex items-center gap-3 bg-accent-400/[0.05] px-3 py-2.5">
+                <span class="flex h-4 w-4 shrink-0 items-center justify-center text-accent-400">
+                  <svg viewBox="0 0 24 24" class="h-3.5 w-3.5 pulse-dot" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>
+                </span>
+                <span class="min-w-0 flex-1 truncate font-mono text-[11px] text-zinc-200">/work/featured-projects</span>
+                <span class="tnum w-16 text-right font-mono text-[11px] text-zinc-400">9 images</span>
+                <span class="w-16 text-right font-mono text-[11px] text-accent-300">crawling</span>
+              </li>
+              <!-- error -->
+              <li class="flex items-center gap-3 bg-zinc-950 px-3 py-2.5">
+                <span class="flex h-4 w-4 shrink-0 items-center justify-center text-amber-400">
+                  <svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+                </span>
+                <span class="min-w-0 flex-1 truncate font-mono text-[11px] text-zinc-400">/blog/2019-archive</span>
+                <span class="tnum w-16 text-right font-mono text-[11px] text-zinc-600">timed out</span>
+                <span class="w-16 text-right font-mono text-[11px] text-amber-400">error</span>
+              </li>
+              <!-- queued -->
+              <li class="flex items-center gap-3 bg-zinc-950 px-3 py-2.5">
+                <span class="flex h-4 w-4 shrink-0 items-center justify-center text-zinc-600">
+                  <svg viewBox="0 0 24 24" class="h-3 w-3" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+                </span>
+                <span class="min-w-0 flex-1 truncate font-mono text-[11px] text-zinc-500">/contact</span>
+                <span class="tnum w-16 text-right font-mono text-[11px] text-zinc-600">-</span>
+                <span class="w-16 text-right font-mono text-[11px] text-zinc-600">queued</span>
+              </li>
+            </ul>
+
+            <!-- overall progress -->
+            <div class="mt-4">
+              <div class="flex items-center justify-between font-mono text-[11px] text-zinc-400">
+                <span>Crawling page <span class="tnum text-zinc-200">24</span> of <span class="tnum text-zinc-200">142</span></span>
+                <span class="tnum text-accent-300">318 images so far</span>
+              </div>
+              <div class="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-zinc-800">
+                <div class="crawl-bar h-full w-[17%] rounded-full"></div>
+              </div>
+            </div>
+
+            <!-- continue to workbench -->
+            <div class="mt-4 flex flex-col gap-3 rounded-lg border border-white/10 bg-zinc-950 p-3 sm:flex-row sm:items-center sm:justify-between">
+              <span class="font-mono text-[11px] text-zinc-400">You can open the Workbench now and keep crawling in the background.</span>
+              <a href="app-workbench.html" class="inline-flex items-center justify-center gap-1.5 rounded-lg border border-white/15 bg-zinc-900 px-3 py-1.5 font-mono text-xs text-zinc-200 transition-colors duration-150 hover:border-white/15 hover:bg-zinc-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950">
+                Open Workbench
+                <svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- quiet bandwidth / privacy note -->
+        <p class="mt-3 text-center font-mono text-[11px] leading-relaxed text-zinc-500">
+          Crawling is paced to be polite to the site you point it at. Your image files stay in your browser.
+        </p>
+      </section>
+
+    </div>
+
+    <!-- thin status strip -->
+    <footer class="border-t border-white/10 bg-zinc-950">
+      <div class="mx-auto flex max-w-7xl flex-col items-center justify-between gap-2 px-4 py-3 font-mono text-[11px] text-zinc-500 sm:flex-row sm:px-6 lg:px-8">
+        <span class="flex items-center gap-1.5"><span class="h-1.5 w-1.5 rounded-full bg-accent-400"></span>Public images only · conversion runs in your browser</span>
+        <span>ScrapeConvert · open source under MIT</span>
+      </div>
+    </footer>
+  </main>
+
+</body>
+</html>

@@ -1,0 +1,911 @@
+<!doctype html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ScrapeConvert: pull images off any website and convert them in your browser</title>
+  <meta name="description" content="Extract images from one page, several pages, or a whole site, flag the duplicates, then convert and resize them to WebP, AVIF, PNG, or JPEG. Conversion runs in your browser, so your files are never stored. Free, no signup, no ads." />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+
+  
+  
+  
+<style>
+
+    html { -webkit-font-smoothing: antialiased; }
+    body { font-feature-settings: "cv02","cv03","cv04","cv11"; }
+    /* subtle dotted grid for the hero, drawn with CSS not an image */
+    .grid-bg {
+      background-image: radial-gradient(rgba(255,255,255,0.05) 1px, transparent 1px);
+      background-size: 28px 28px;
+      background-position: -1px -1px;
+    }
+    .tnum { font-variant-numeric: tabular-nums; }
+    /* WebP vs PNG loading simulator */
+    .sim-frame { position: relative; aspect-ratio: 16 / 10; width: 100%; overflow: hidden; border-radius: 0.5rem; border: 1px solid rgba(255,255,255,0.1); background: #18181b; }
+    .sim-photo { position: absolute; inset: 0; background: radial-gradient(120% 120% at 18% 12%, #38bdf8 0%, #6366f1 38%, #0f172a 78%); }
+    .sim-mask { position: absolute; left: 0; right: 0; bottom: 0; background: linear-gradient(90deg, #27272a, #3f3f46, #27272a); background-size: 200% 100%; animation: sim-shimmer 1.2s linear infinite; box-shadow: 0 -1px 0 0 rgba(52,211,153,0.55); }
+    @keyframes sim-shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+    @media (prefers-reduced-motion: reduce) { .sim-mask { animation: none; } }
+  
+
+/* ---- */
+
+*, ::before, ::after{--tw-border-spacing-x:0;--tw-border-spacing-y:0;--tw-translate-x:0;--tw-translate-y:0;--tw-rotate:0;--tw-skew-x:0;--tw-skew-y:0;--tw-scale-x:1;--tw-scale-y:1;--tw-pan-x: ;--tw-pan-y: ;--tw-pinch-zoom: ;--tw-scroll-snap-strictness:proximity;--tw-gradient-from-position: ;--tw-gradient-via-position: ;--tw-gradient-to-position: ;--tw-ordinal: ;--tw-slashed-zero: ;--tw-numeric-figure: ;--tw-numeric-spacing: ;--tw-numeric-fraction: ;--tw-ring-inset: ;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-color:rgb(59 130 246 / 0.5);--tw-ring-offset-shadow:0 0 #0000;--tw-ring-shadow:0 0 #0000;--tw-shadow:0 0 #0000;--tw-shadow-colored:0 0 #0000;--tw-blur: ;--tw-brightness: ;--tw-contrast: ;--tw-grayscale: ;--tw-hue-rotate: ;--tw-invert: ;--tw-saturate: ;--tw-sepia: ;--tw-drop-shadow: ;--tw-backdrop-blur: ;--tw-backdrop-brightness: ;--tw-backdrop-contrast: ;--tw-backdrop-grayscale: ;--tw-backdrop-hue-rotate: ;--tw-backdrop-invert: ;--tw-backdrop-opacity: ;--tw-backdrop-saturate: ;--tw-backdrop-sepia: ;--tw-contain-size: ;--tw-contain-layout: ;--tw-contain-paint: ;--tw-contain-style: }::backdrop{--tw-border-spacing-x:0;--tw-border-spacing-y:0;--tw-translate-x:0;--tw-translate-y:0;--tw-rotate:0;--tw-skew-x:0;--tw-skew-y:0;--tw-scale-x:1;--tw-scale-y:1;--tw-pan-x: ;--tw-pan-y: ;--tw-pinch-zoom: ;--tw-scroll-snap-strictness:proximity;--tw-gradient-from-position: ;--tw-gradient-via-position: ;--tw-gradient-to-position: ;--tw-ordinal: ;--tw-slashed-zero: ;--tw-numeric-figure: ;--tw-numeric-spacing: ;--tw-numeric-fraction: ;--tw-ring-inset: ;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-color:rgb(59 130 246 / 0.5);--tw-ring-offset-shadow:0 0 #0000;--tw-ring-shadow:0 0 #0000;--tw-shadow:0 0 #0000;--tw-shadow-colored:0 0 #0000;--tw-blur: ;--tw-brightness: ;--tw-contrast: ;--tw-grayscale: ;--tw-hue-rotate: ;--tw-invert: ;--tw-saturate: ;--tw-sepia: ;--tw-drop-shadow: ;--tw-backdrop-blur: ;--tw-backdrop-brightness: ;--tw-backdrop-contrast: ;--tw-backdrop-grayscale: ;--tw-backdrop-hue-rotate: ;--tw-backdrop-invert: ;--tw-backdrop-opacity: ;--tw-backdrop-saturate: ;--tw-backdrop-sepia: ;--tw-contain-size: ;--tw-contain-layout: ;--tw-contain-paint: ;--tw-contain-style: }/* ! tailwindcss v3.4.17 | MIT License | https://tailwindcss.com */*,::after,::before{box-sizing:border-box;border-width:0;border-style:solid;border-color:#e5e7eb}::after,::before{--tw-content:''}:host,html{line-height:1.5;-webkit-text-size-adjust:100%;-moz-tab-size:4;tab-size:4;font-family:Inter, ui-sans-serif, system-ui, sans-serif;font-feature-settings:normal;font-variation-settings:normal;-webkit-tap-highlight-color:transparent}body{margin:0;line-height:inherit}hr{height:0;color:inherit;border-top-width:1px}abbr:where([title]){-webkit-text-decoration:underline dotted;text-decoration:underline dotted}h1,h2,h3,h4,h5,h6{font-size:inherit;font-weight:inherit}a{color:inherit;text-decoration:inherit}b,strong{font-weight:bolder}code,kbd,pre,samp{font-family:"JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;font-feature-settings:normal;font-variation-settings:normal;font-size:1em}small{font-size:80%}sub,sup{font-size:75%;line-height:0;position:relative;vertical-align:baseline}sub{bottom:-.25em}sup{top:-.5em}table{text-indent:0;border-color:inherit;border-collapse:collapse}button,input,optgroup,select,textarea{font-family:inherit;font-feature-settings:inherit;font-variation-settings:inherit;font-size:100%;font-weight:inherit;line-height:inherit;letter-spacing:inherit;color:inherit;margin:0;padding:0}button,select{text-transform:none}button,input:where([type=button]),input:where([type=reset]),input:where([type=submit]){-webkit-appearance:button;background-color:transparent;background-image:none}:-moz-focusring{outline:auto}:-moz-ui-invalid{box-shadow:none}progress{vertical-align:baseline}::-webkit-inner-spin-button,::-webkit-outer-spin-button{height:auto}[type=search]{-webkit-appearance:textfield;outline-offset:-2px}::-webkit-search-decoration{-webkit-appearance:none}::-webkit-file-upload-button{-webkit-appearance:button;font:inherit}summary{display:list-item}blockquote,dd,dl,figure,h1,h2,h3,h4,h5,h6,hr,p,pre{margin:0}fieldset{margin:0;padding:0}legend{padding:0}menu,ol,ul{list-style:none;margin:0;padding:0}dialog{padding:0}textarea{resize:vertical}input::placeholder,textarea::placeholder{opacity:1;color:#9ca3af}[role=button],button{cursor:pointer}:disabled{cursor:default}audio,canvas,embed,iframe,img,object,svg,video{display:block;vertical-align:middle}img,video{max-width:100%;height:auto}[hidden]:where(:not([hidden=until-found])){display:none}.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0, 0, 0, 0);white-space:nowrap;border-width:0}.pointer-events-none{pointer-events:none}.absolute{position:absolute}.relative{position:relative}.sticky{position:sticky}.inset-0{inset:0px}.inset-x-0{left:0px;right:0px}.inset-y-0{top:0px;bottom:0px}.bottom-0{bottom:0px}.left-0{left:0px}.left-1\.5{left:0.375rem}.left-\[80\%\]{left:80%}.right-1\.5{right:0.375rem}.top-0{top:0px}.top-1\.5{top:0.375rem}.top-1\/2{top:50%}.z-40{z-index:40}.order-1{order:1}.order-2{order:2}.mx-auto{margin-left:auto;margin-right:auto}.mb-2{margin-bottom:0.5rem}.ml-2{margin-left:0.5rem}.ml-3{margin-left:0.75rem}.ml-auto{margin-left:auto}.mt-0\.5{margin-top:0.125rem}.mt-1{margin-top:0.25rem}.mt-12{margin-top:3rem}.mt-14{margin-top:3.5rem}.mt-2{margin-top:0.5rem}.mt-3{margin-top:0.75rem}.mt-4{margin-top:1rem}.mt-5{margin-top:1.25rem}.mt-6{margin-top:1.5rem}.mt-8{margin-top:2rem}.flex{display:flex}.inline-flex{display:inline-flex}.grid{display:grid}.hidden{display:none}.aspect-\[4\/3\]{aspect-ratio:4/3}.h-1{height:0.25rem}.h-1\.5{height:0.375rem}.h-10{height:2.5rem}.h-16{height:4rem}.h-3{height:0.75rem}.h-3\.5{height:0.875rem}.h-4{height:1rem}.h-5{height:1.25rem}.h-6{height:1.5rem}.h-7{height:1.75rem}.h-8{height:2rem}.h-9{height:2.25rem}.h-full{height:100%}.w-1{width:0.25rem}.w-1\.5{width:0.375rem}.w-10{width:2.5rem}.w-14{width:3.5rem}.w-3{width:0.75rem}.w-3\.5{width:0.875rem}.w-4{width:1rem}.w-5{width:1.25rem}.w-6{width:1.5rem}.w-7{width:1.75rem}.w-8{width:2rem}.w-9{width:2.25rem}.w-\[80\%\]{width:80%}.w-full{width:100%}.min-w-0{min-width:0px}.min-w-\[680px\]{min-width:680px}.max-w-2xl{max-width:42rem}.max-w-3xl{max-width:48rem}.max-w-7xl{max-width:80rem}.max-w-md{max-width:28rem}.max-w-prose{max-width:65ch}.max-w-sm{max-width:24rem}.max-w-xl{max-width:36rem}.flex-1{flex:1 1 0%}.shrink-0{flex-shrink:0}.border-collapse{border-collapse:collapse}.-translate-x-1\/2{--tw-translate-x:-50%;transform:translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))}.-translate-y-1\/2{--tw-translate-y:-50%;transform:translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))}.cursor-pointer{cursor:pointer}.list-none{list-style-type:none}.grid-cols-2{grid-template-columns:repeat(2, minmax(0, 1fr))}.grid-cols-3{grid-template-columns:repeat(3, minmax(0, 1fr))}.grid-cols-4{grid-template-columns:repeat(4, minmax(0, 1fr))}.flex-col{flex-direction:column}.flex-wrap{flex-wrap:wrap}.items-start{align-items:flex-start}.items-center{align-items:center}.justify-center{justify-content:center}.justify-between{justify-content:space-between}.gap-1{gap:0.25rem}.gap-1\.5{gap:0.375rem}.gap-10{gap:2.5rem}.gap-12{gap:3rem}.gap-14{gap:3.5rem}.gap-16{gap:4rem}.gap-2{gap:0.5rem}.gap-2\.5{gap:0.625rem}.gap-3{gap:0.75rem}.gap-4{gap:1rem}.gap-6{gap:1.5rem}.gap-px{gap:1px}.gap-x-12{column-gap:3rem}.gap-x-8{column-gap:2rem}.gap-y-3{row-gap:0.75rem}.gap-y-8{row-gap:2rem}.space-y-3 > :not([hidden]) ~ :not([hidden]){--tw-space-y-reverse:0;margin-top:calc(0.75rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(0.75rem * var(--tw-space-y-reverse))}.space-y-4 > :not([hidden]) ~ :not([hidden]){--tw-space-y-reverse:0;margin-top:calc(1rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(1rem * var(--tw-space-y-reverse))}.space-y-5 > :not([hidden]) ~ :not([hidden]){--tw-space-y-reverse:0;margin-top:calc(1.25rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(1.25rem * var(--tw-space-y-reverse))}.divide-y > :not([hidden]) ~ :not([hidden]){--tw-divide-y-reverse:0;border-top-width:calc(1px * calc(1 - var(--tw-divide-y-reverse)));border-bottom-width:calc(1px * var(--tw-divide-y-reverse))}.divide-white\/10 > :not([hidden]) ~ :not([hidden]){border-color:rgb(255 255 255 / 0.1)}.overflow-hidden{overflow:hidden}.overflow-x-auto{overflow-x:auto}.scroll-smooth{scroll-behavior:smooth}.truncate{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.rounded{border-radius:0.25rem}.rounded-2xl{border-radius:1rem}.rounded-full{border-radius:9999px}.rounded-lg{border-radius:0.5rem}.rounded-md{border-radius:0.375rem}.rounded-xl{border-radius:0.75rem}.border{border-width:1px}.border-2{border-width:2px}.border-y{border-top-width:1px;border-bottom-width:1px}.border-b{border-bottom-width:1px}.border-t{border-top-width:1px}.border-accent-400{--tw-border-opacity:1;border-color:rgb(52 211 153 / var(--tw-border-opacity, 1))}.border-accent-400\/30{border-color:rgb(52 211 153 / 0.3)}.border-accent-400\/40{border-color:rgb(52 211 153 / 0.4)}.border-amber-400\/30{border-color:rgb(251 191 36 / 0.3)}.border-white\/10{border-color:rgb(255 255 255 / 0.1)}.border-zinc-950{--tw-border-opacity:1;border-color:rgb(9 9 11 / var(--tw-border-opacity, 1))}.bg-accent-400{--tw-bg-opacity:1;background-color:rgb(52 211 153 / var(--tw-bg-opacity, 1))}.bg-accent-400\/10{background-color:rgb(52 211 153 / 0.1)}.bg-accent-400\/15{background-color:rgb(52 211 153 / 0.15)}.bg-accent-400\/20{background-color:rgb(52 211 153 / 0.2)}.bg-accent-400\/\[0\.05\]{background-color:rgb(52 211 153 / 0.05)}.bg-accent-400\/\[0\.06\]{background-color:rgb(52 211 153 / 0.06)}.bg-accent-400\/\[0\.07\]{background-color:rgb(52 211 153 / 0.07)}.bg-amber-400\/90{background-color:rgb(251 191 36 / 0.9)}.bg-amber-400\/\[0\.06\]{background-color:rgb(251 191 36 / 0.06)}.bg-black\/55{background-color:rgb(0 0 0 / 0.55)}.bg-white\/10{background-color:rgb(255 255 255 / 0.1)}.bg-white\/5{background-color:rgb(255 255 255 / 0.05)}.bg-zinc-500{--tw-bg-opacity:1;background-color:rgb(113 113 122 / var(--tw-bg-opacity, 1))}.bg-zinc-700{--tw-bg-opacity:1;background-color:rgb(63 63 70 / var(--tw-bg-opacity, 1))}.bg-zinc-800{--tw-bg-opacity:1;background-color:rgb(39 39 42 / var(--tw-bg-opacity, 1))}.bg-zinc-900{--tw-bg-opacity:1;background-color:rgb(24 24 27 / var(--tw-bg-opacity, 1))}.bg-zinc-900\/50{background-color:rgb(24 24 27 / 0.5)}.bg-zinc-900\/60{background-color:rgb(24 24 27 / 0.6)}.bg-zinc-900\/80{background-color:rgb(24 24 27 / 0.8)}.bg-zinc-950{--tw-bg-opacity:1;background-color:rgb(9 9 11 / var(--tw-bg-opacity, 1))}.bg-zinc-950\/80{background-color:rgb(9 9 11 / 0.8)}.bg-gradient-to-br{background-image:linear-gradient(to bottom right, var(--tw-gradient-stops))}.from-zinc-600{--tw-gradient-from:#52525b var(--tw-gradient-from-position);--tw-gradient-to:rgb(82 82 91 / 0) var(--tw-gradient-to-position);--tw-gradient-stops:var(--tw-gradient-from), var(--tw-gradient-to)}.from-zinc-700{--tw-gradient-from:#3f3f46 var(--tw-gradient-from-position);--tw-gradient-to:rgb(63 63 70 / 0) var(--tw-gradient-to-position);--tw-gradient-stops:var(--tw-gradient-from), var(--tw-gradient-to)}.to-zinc-600{--tw-gradient-to:#52525b var(--tw-gradient-to-position)}.to-zinc-700{--tw-gradient-to:#3f3f46 var(--tw-gradient-to-position)}.to-zinc-800{--tw-gradient-to:#27272a var(--tw-gradient-to-position)}.to-zinc-900{--tw-gradient-to:#18181b var(--tw-gradient-to-position)}.p-3{padding:0.75rem}.p-4{padding:1rem}.p-5{padding:1.25rem}.p-6{padding:1.5rem}.px-1{padding-left:0.25rem;padding-right:0.25rem}.px-1\.5{padding-left:0.375rem;padding-right:0.375rem}.px-2{padding-left:0.5rem;padding-right:0.5rem}.px-2\.5{padding-left:0.625rem;padding-right:0.625rem}.px-3{padding-left:0.75rem;padding-right:0.75rem}.px-3\.5{padding-left:0.875rem;padding-right:0.875rem}.px-4{padding-left:1rem;padding-right:1rem}.px-5{padding-left:1.25rem;padding-right:1.25rem}.px-6{padding-left:1.5rem;padding-right:1.5rem}.py-0\.5{padding-top:0.125rem;padding-bottom:0.125rem}.py-1{padding-top:0.25rem;padding-bottom:0.25rem}.py-1\.5{padding-top:0.375rem;padding-bottom:0.375rem}.py-14{padding-top:3.5rem;padding-bottom:3.5rem}.py-16{padding-top:4rem;padding-bottom:4rem}.py-2{padding-top:0.5rem;padding-bottom:0.5rem}.py-2\.5{padding-top:0.625rem;padding-bottom:0.625rem}.py-24{padding-top:6rem;padding-bottom:6rem}.py-3{padding-top:0.75rem;padding-bottom:0.75rem}.py-4{padding-top:1rem;padding-bottom:1rem}.py-5{padding-top:1.25rem;padding-bottom:1.25rem}.py-6{padding-top:1.5rem;padding-bottom:1.5rem}.pt-8{padding-top:2rem}.text-left{text-align:left}.text-center{text-align:center}.text-right{text-align:right}.font-mono{font-family:"JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace}.font-sans{font-family:Inter, ui-sans-serif, system-ui, sans-serif}.text-3xl{font-size:1.875rem;line-height:2.25rem}.text-4xl{font-size:2.25rem;line-height:2.5rem}.text-\[10px\]{font-size:10px}.text-\[11px\]{font-size:11px}.text-\[12px\]{font-size:12px}.text-\[15px\]{font-size:15px}.text-\[9px\]{font-size:9px}.text-lg{font-size:1.125rem;line-height:1.75rem}.text-sm{font-size:0.875rem;line-height:1.25rem}.text-xs{font-size:0.75rem;line-height:1rem}.font-medium{font-weight:500}.font-normal{font-weight:400}.font-semibold{font-weight:600}.uppercase{text-transform:uppercase}.leading-\[1\.08\]{line-height:1.08}.leading-relaxed{line-height:1.625}.leading-tight{line-height:1.25}.tracking-tight{letter-spacing:-0.025em}.tracking-wider{letter-spacing:0.05em}.tracking-widest{letter-spacing:0.1em}.text-accent-300{--tw-text-opacity:1;color:rgb(110 231 183 / var(--tw-text-opacity, 1))}.text-accent-400{--tw-text-opacity:1;color:rgb(52 211 153 / var(--tw-text-opacity, 1))}.text-zinc-100{--tw-text-opacity:1;color:rgb(244 244 245 / var(--tw-text-opacity, 1))}.text-zinc-200{--tw-text-opacity:1;color:rgb(228 228 231 / var(--tw-text-opacity, 1))}.text-zinc-300{--tw-text-opacity:1;color:rgb(212 212 216 / var(--tw-text-opacity, 1))}.text-zinc-400{--tw-text-opacity:1;color:rgb(161 161 170 / var(--tw-text-opacity, 1))}.text-zinc-50{--tw-text-opacity:1;color:rgb(250 250 250 / var(--tw-text-opacity, 1))}.text-zinc-500{--tw-text-opacity:1;color:rgb(113 113 122 / var(--tw-text-opacity, 1))}.text-zinc-600{--tw-text-opacity:1;color:rgb(82 82 91 / var(--tw-text-opacity, 1))}.text-zinc-950{--tw-text-opacity:1;color:rgb(9 9 11 / var(--tw-text-opacity, 1))}.antialiased{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}.shadow-xl{--tw-shadow:0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);--tw-shadow-colored:0 20px 25px -5px var(--tw-shadow-color), 0 8px 10px -6px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow)}.shadow-black\/20{--tw-shadow-color:rgb(0 0 0 / 0.2);--tw-shadow:var(--tw-shadow-colored)}.backdrop-blur{--tw-backdrop-blur:blur(8px);-webkit-backdrop-filter:var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia);backdrop-filter:var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia)}.transition-colors{transition-property:color, background-color, border-color, fill, stroke, -webkit-text-decoration-color;transition-property:color, background-color, border-color, text-decoration-color, fill, stroke;transition-property:color, background-color, border-color, text-decoration-color, fill, stroke, -webkit-text-decoration-color;transition-timing-function:cubic-bezier(0.4, 0, 0.2, 1);transition-duration:150ms}.transition-transform{transition-property:transform;transition-timing-function:cubic-bezier(0.4, 0, 0.2, 1);transition-duration:150ms}.duration-150{transition-duration:150ms}.duration-200{transition-duration:200ms}.\[mask-image\:radial-gradient\(ellipse_at_center\2c black\2c transparent_75\%\)\]{-webkit-mask-image:radial-gradient(ellipse at center,black,transparent 75%);mask-image:radial-gradient(ellipse at center,black,transparent 75%)}.\[mask-image\:radial-gradient\(ellipse_at_top\2c black\2c transparent_70\%\)\]{-webkit-mask-image:radial-gradient(ellipse at top,black,transparent 70%);mask-image:radial-gradient(ellipse at top,black,transparent 70%)}.selection\:bg-accent-400\/20 *::selection{background-color:rgb(52 211 153 / 0.2)}.selection\:text-accent-300 *::selection{--tw-text-opacity:1;color:rgb(110 231 183 / var(--tw-text-opacity, 1))}.selection\:bg-accent-400\/20::selection{background-color:rgb(52 211 153 / 0.2)}.selection\:text-accent-300::selection{--tw-text-opacity:1;color:rgb(110 231 183 / var(--tw-text-opacity, 1))}.hover\:border-white\/25:hover{border-color:rgb(255 255 255 / 0.25)}.hover\:bg-accent-300:hover{--tw-bg-opacity:1;background-color:rgb(110 231 183 / var(--tw-bg-opacity, 1))}.hover\:text-accent-400:hover{--tw-text-opacity:1;color:rgb(52 211 153 / var(--tw-text-opacity, 1))}.hover\:text-zinc-100:hover{--tw-text-opacity:1;color:rgb(244 244 245 / var(--tw-text-opacity, 1))}.focus\:not-sr-only:focus{position:static;width:auto;height:auto;padding:0;margin:0;overflow:visible;clip:auto;white-space:normal}.focus\:absolute:focus{position:absolute}.focus\:left-4:focus{left:1rem}.focus\:top-4:focus{top:1rem}.focus\:z-50:focus{z-index:50}.focus\:rounded-lg:focus{border-radius:0.5rem}.focus\:bg-accent-400:focus{--tw-bg-opacity:1;background-color:rgb(52 211 153 / var(--tw-bg-opacity, 1))}.focus\:px-4:focus{padding-left:1rem;padding-right:1rem}.focus\:py-2:focus{padding-top:0.5rem;padding-bottom:0.5rem}.focus\:text-sm:focus{font-size:0.875rem;line-height:1.25rem}.focus\:font-medium:focus{font-weight:500}.focus\:text-zinc-950:focus{--tw-text-opacity:1;color:rgb(9 9 11 / var(--tw-text-opacity, 1))}.focus\:outline-none:focus{outline:2px solid transparent;outline-offset:2px}.focus-visible\:ring-2:focus-visible{--tw-ring-offset-shadow:var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);--tw-ring-shadow:var(--tw-ring-inset) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color);box-shadow:var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 #0000)}.focus-visible\:ring-accent-400:focus-visible{--tw-ring-opacity:1;--tw-ring-color:rgb(52 211 153 / var(--tw-ring-opacity, 1))}.focus-visible\:ring-offset-2:focus-visible{--tw-ring-offset-width:2px}.focus-visible\:ring-offset-zinc-950:focus-visible{--tw-ring-offset-color:#09090b}.group[open] .group-open\:rotate-45{--tw-rotate:45deg;transform:translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))}@supports ((-webkit-backdrop-filter: var(--tw)) or (backdrop-filter: var(--tw))){.supports-\[backdrop-filter\]\:bg-zinc-950\/70{background-color:rgb(9 9 11 / 0.7)}}@media (min-width: 640px){.sm\:inline{display:inline}.sm\:grid-cols-2{grid-template-columns:repeat(2, minmax(0, 1fr))}.sm\:grid-cols-3{grid-template-columns:repeat(3, minmax(0, 1fr))}.sm\:flex-row{flex-direction:row}.sm\:items-center{align-items:center}.sm\:justify-between{justify-content:space-between}.sm\:p-5{padding:1.25rem}.sm\:px-12{padding-left:3rem;padding-right:3rem}.sm\:py-32{padding-top:8rem;padding-bottom:8rem}.sm\:text-4xl{font-size:2.25rem;line-height:2.5rem}.sm\:text-5xl{font-size:3rem;line-height:1}}@media (min-width: 768px){.md\:flex{display:flex}.md\:hidden{display:none}.md\:grid-cols-3{grid-template-columns:repeat(3, minmax(0, 1fr))}.md\:flex-row{flex-direction:row}.md\:items-start{align-items:flex-start}.md\:justify-between{justify-content:space-between}}@media (min-width: 1024px){.lg\:order-1{order:1}.lg\:order-2{order:2}.lg\:grid-cols-2{grid-template-columns:repeat(2, minmax(0, 1fr))}.lg\:grid-cols-\[0\.9fr_1\.1fr\]{grid-template-columns:0.9fr 1.1fr}.lg\:gap-16{gap:4rem}.lg\:px-8{padding-left:2rem;padding-right:2rem}.lg\:pt-10{padding-top:2.5rem}}
+</style>
+</head>
+
+<body class="bg-zinc-950 text-zinc-300 font-sans antialiased selection:bg-accent-400/20 selection:text-accent-300">
+
+  <!-- Skip link -->
+  <a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-accent-400 focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-zinc-950">Skip to content</a>
+
+  <!-- ============ NAV ============ -->
+  <header class="sticky top-0 z-40 border-b border-white/10 bg-zinc-950/80 backdrop-blur supports-[backdrop-filter]:bg-zinc-950/70">
+    <nav class="mx-auto flex h-16 max-w-7xl items-center justify-between px-6 lg:px-8" aria-label="Primary">
+      <a href="#top" class="group flex items-center gap-2.5 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950">
+        <span class="flex h-7 w-7 items-center justify-center rounded-md border border-accent-400/40 bg-accent-400/10">
+          <!-- glyph: bracket + arrow -->
+          <svg viewBox="0 0 24 24" class="h-4 w-4 text-accent-400" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M8 4 4 12l4 8" /><path d="m13 8 4 4-4 4" />
+          </svg>
+        </span>
+        <span class="font-mono text-[15px] font-semibold tracking-tight text-zinc-50">ScrapeConvert</span>
+      </a>
+
+      <div class="hidden items-center gap-1 md:flex">
+        <a href="#scraper" class="rounded-lg px-3 py-2 text-sm text-zinc-400 transition-colors duration-150 hover:text-zinc-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950">Scraper</a>
+        <a href="#converter" class="rounded-lg px-3 py-2 text-sm text-zinc-400 transition-colors duration-150 hover:text-zinc-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950">Converter</a>
+        <a href="#how" class="rounded-lg px-3 py-2 text-sm text-zinc-400 transition-colors duration-150 hover:text-zinc-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950">How it works</a>
+        <a href="#faq" class="rounded-lg px-3 py-2 text-sm text-zinc-400 transition-colors duration-150 hover:text-zinc-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950">FAQ</a>
+        <a href="https://github.com/scrapeconvert" class="flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm text-zinc-400 transition-colors duration-150 hover:text-zinc-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950">
+          <svg viewBox="0 0 24 24" class="h-4 w-4" fill="currentColor" aria-hidden="true"><path d="M12 .5A11.5 11.5 0 0 0 .5 12a11.5 11.5 0 0 0 7.86 10.92c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.53-1.34-1.29-1.7-1.29-1.7-1.05-.72.08-.7.08-.7 1.16.08 1.78 1.2 1.78 1.2 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.56-.3-5.25-1.28-5.25-5.7 0-1.26.45-2.29 1.19-3.1-.12-.3-.52-1.48.11-3.08 0 0 .97-.31 3.18 1.18a11 11 0 0 1 5.8 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.6.23 2.78.11 3.08.74.81 1.19 1.84 1.19 3.1 0 4.43-2.7 5.4-5.27 5.69.41.36.78 1.06.78 2.14v3.18c0 .31.21.67.8.56A11.5 11.5 0 0 0 23.5 12 11.5 11.5 0 0 0 12 .5Z"/></svg>
+          GitHub
+        </a>
+        <a href="#" class="ml-2 inline-flex items-center rounded-lg bg-accent-400 px-3.5 py-2 text-sm font-medium text-zinc-950 transition-colors duration-150 hover:bg-accent-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950">Open the app</a>
+      </div>
+
+      <!-- mobile CTA -->
+      <a href="#" class="inline-flex items-center rounded-lg bg-accent-400 px-3.5 py-2 text-sm font-medium text-zinc-950 transition-colors duration-150 hover:bg-accent-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950 md:hidden">Open</a>
+    </nav>
+  </header>
+
+  <main id="main">
+    <span id="top"></span>
+
+    <!-- ============ HERO ============ -->
+    <section class="relative overflow-hidden border-b border-white/10">
+      <div class="grid-bg pointer-events-none absolute inset-0 [mask-image:radial-gradient(ellipse_at_top,black,transparent_70%)]" aria-hidden="true"></div>
+
+      <div class="relative mx-auto max-w-7xl px-6 py-24 sm:py-32 lg:px-8">
+        <div class="grid items-center gap-16 lg:grid-cols-2">
+
+          <!-- copy -->
+          <div class="max-w-xl">
+            <span class="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 font-mono text-xs text-zinc-300">
+              <span class="h-1.5 w-1.5 rounded-full bg-accent-400"></span>
+              Free and open source
+            </span>
+
+            <h1 class="mt-6 text-4xl font-semibold leading-[1.08] tracking-tight text-zinc-50 sm:text-5xl">
+              Pull every image off a website and get it ready for the web.
+            </h1>
+
+            <p class="mt-5 max-w-xl text-lg leading-relaxed text-zinc-400">
+              Point ScrapeConvert at a page, a list of pages, or a whole site. It finds the images, flags the duplicates, and converts the ones you pick to WebP, AVIF, PNG, or JPEG. The conversion runs in your browser, so your files are never stored.
+            </p>
+
+            <div class="mt-8 flex flex-col items-start gap-4 sm:flex-row sm:items-center">
+              <a href="#" class="inline-flex items-center justify-center gap-2 rounded-lg bg-accent-400 px-5 py-3 text-sm font-medium text-zinc-950 transition-colors duration-150 hover:bg-accent-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950">
+                Open the app, free
+                <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+              </a>
+              <a href="https://github.com/scrapeconvert" class="inline-flex items-center gap-1.5 rounded-lg px-1 py-1 font-mono text-sm text-zinc-400 transition-colors duration-150 hover:text-zinc-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950">
+                <svg viewBox="0 0 24 24" class="h-4 w-4" fill="currentColor" aria-hidden="true"><path d="M12 .5A11.5 11.5 0 0 0 .5 12a11.5 11.5 0 0 0 7.86 10.92c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.53-1.34-1.29-1.7-1.29-1.7-1.05-.72.08-.7.08-.7 1.16.08 1.78 1.2 1.78 1.2 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.56-.3-5.25-1.28-5.25-5.7 0-1.26.45-2.29 1.19-3.1-.12-.3-.52-1.48.11-3.08 0 0 .97-.31 3.18 1.18a11 11 0 0 1 5.8 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.6.23 2.78.11 3.08.74.81 1.19 1.84 1.19 3.1 0 4.43-2.7 5.4-5.27 5.69.41.36.78 1.06.78 2.14v3.18c0 .31.21.67.8.56A11.5 11.5 0 0 0 23.5 12 11.5 11.5 0 0 0 12 .5Z"/></svg>
+                View the source on GitHub
+              </a>
+            </div>
+
+            <p class="mt-6 font-mono text-xs leading-relaxed text-zinc-500">Public images only. No account and no ads. The conversion never leaves your browser. Works in Chrome, Firefox, and Safari.</p>
+          </div>
+
+          <!-- product preview: faux app window -->
+          <div class="relative">
+            <div class="overflow-hidden rounded-2xl border border-white/10 bg-zinc-900/80 shadow-xl shadow-black/20">
+              <!-- chrome bar -->
+              <div class="flex items-center gap-2 border-b border-white/10 bg-zinc-900 px-4 py-3">
+                <span class="h-3 w-3 rounded-full bg-zinc-700"></span>
+                <span class="h-3 w-3 rounded-full bg-zinc-700"></span>
+                <span class="h-3 w-3 rounded-full bg-zinc-700"></span>
+                <span class="ml-3 font-mono text-xs text-zinc-500">scrapeconvert.com/app</span>
+              </div>
+
+              <div class="p-4 sm:p-5">
+                <!-- URL input row -->
+                <div class="flex items-center gap-2">
+                  <div class="flex flex-1 items-center gap-2 rounded-lg border border-white/10 bg-zinc-950 px-3 py-2">
+                    <svg viewBox="0 0 24 24" class="h-4 w-4 shrink-0 text-zinc-500" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.07 0l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.07 0l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                    <span class="truncate font-mono text-xs text-zinc-300">https://example.com/sitemap.xml</span>
+                  </div>
+                  <span class="inline-flex items-center rounded-lg bg-accent-400 px-3 py-2 font-mono text-xs font-medium text-zinc-950">Scrape</span>
+                </div>
+
+                <!-- status line -->
+                <div class="mt-3 flex items-center justify-between font-mono text-[11px] text-zinc-500">
+                  <span class="flex items-center gap-1.5"><span class="h-1.5 w-1.5 rounded-full bg-accent-400"></span>42 images found · 3 duplicates flagged</span>
+                  <span>sorted by size</span>
+                </div>
+
+                <!-- tile grid -->
+                <div class="mt-3 grid grid-cols-3 gap-2.5">
+                  <!-- each tile: colored block + format/size label -->
+                  <figure class="group relative overflow-hidden rounded-lg border border-white/10 bg-zinc-800">
+                    <div class="aspect-[4/3] w-full bg-gradient-to-br from-zinc-700 to-zinc-800"></div>
+                    <figcaption class="absolute inset-x-0 bottom-0 flex items-center justify-between bg-black/55 px-1.5 py-1 font-mono text-[10px] text-zinc-200"><span>PNG</span><span class="tnum">1.2&nbsp;MB</span></figcaption>
+                    <span class="absolute right-1.5 top-1.5 flex h-4 w-4 items-center justify-center rounded border border-accent-400 bg-accent-400/20 text-accent-300"><svg viewBox="0 0 24 24" class="h-3 w-3" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span>
+                  </figure>
+
+                  <figure class="group relative overflow-hidden rounded-lg border border-white/10 bg-zinc-800">
+                    <div class="aspect-[4/3] w-full bg-gradient-to-br from-zinc-600 to-zinc-700"></div>
+                    <figcaption class="absolute inset-x-0 bottom-0 flex items-center justify-between bg-black/55 px-1.5 py-1 font-mono text-[10px] text-zinc-200"><span>JPEG</span><span class="tnum">880&nbsp;KB</span></figcaption>
+                    <span class="absolute right-1.5 top-1.5 flex h-4 w-4 items-center justify-center rounded border border-accent-400 bg-accent-400/20 text-accent-300"><svg viewBox="0 0 24 24" class="h-3 w-3" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span>
+                  </figure>
+
+                  <figure class="group relative overflow-hidden rounded-lg border border-white/10 bg-zinc-800">
+                    <div class="aspect-[4/3] w-full bg-gradient-to-br from-zinc-700 to-zinc-900"></div>
+                    <figcaption class="absolute inset-x-0 bottom-0 flex items-center justify-between bg-black/55 px-1.5 py-1 font-mono text-[10px] text-zinc-200"><span>PNG</span><span class="tnum">640&nbsp;KB</span></figcaption>
+                  </figure>
+
+                  <figure class="group relative overflow-hidden rounded-lg border border-white/10 bg-zinc-800">
+                    <div class="aspect-[4/3] w-full bg-gradient-to-br from-zinc-600 to-zinc-800"></div>
+                    <figcaption class="absolute inset-x-0 bottom-0 flex items-center justify-between bg-black/55 px-1.5 py-1 font-mono text-[10px] text-zinc-200"><span>WEBP</span><span class="tnum">210&nbsp;KB</span></figcaption>
+                  </figure>
+
+                  <figure class="group relative overflow-hidden rounded-lg border border-amber-400/30 bg-zinc-800">
+                    <div class="aspect-[4/3] w-full bg-gradient-to-br from-zinc-700 to-zinc-800"></div>
+                    <figcaption class="absolute inset-x-0 bottom-0 flex items-center justify-between bg-black/55 px-1.5 py-1 font-mono text-[10px] text-zinc-200"><span>PNG</span><span class="tnum">1.2&nbsp;MB</span></figcaption>
+                    <span class="absolute left-1.5 top-1.5 rounded bg-amber-400/90 px-1 font-mono text-[9px] font-medium text-zinc-950">dupe</span>
+                  </figure>
+
+                  <figure class="group relative overflow-hidden rounded-lg border border-white/10 bg-zinc-800">
+                    <div class="aspect-[4/3] w-full bg-gradient-to-br from-zinc-700 to-zinc-600"></div>
+                    <figcaption class="absolute inset-x-0 bottom-0 flex items-center justify-between bg-black/55 px-1.5 py-1 font-mono text-[10px] text-zinc-200"><span>JPEG</span><span class="tnum">512&nbsp;KB</span></figcaption>
+                    <span class="absolute right-1.5 top-1.5 flex h-4 w-4 items-center justify-center rounded border border-accent-400 bg-accent-400/20 text-accent-300"><svg viewBox="0 0 24 24" class="h-3 w-3" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span>
+                  </figure>
+                </div>
+
+                <!-- convert control -->
+                <div class="mt-4 flex flex-col gap-3 rounded-lg border border-white/10 bg-zinc-950 p-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div class="flex items-center gap-2 font-mono text-xs text-zinc-400">
+                    <span class="text-zinc-500">Convert</span>
+                    <span class="rounded-md border border-accent-400/40 bg-accent-400/10 px-2 py-0.5 text-accent-300">3 selected</span>
+                    <span class="text-zinc-500">to</span>
+                    <span class="rounded-md border border-white/10 bg-zinc-900 px-2 py-0.5 text-zinc-200">WebP</span>
+                    <span class="hidden text-zinc-600 sm:inline">·</span>
+                    <span class="hidden text-zinc-500 sm:inline">q 80</span>
+                  </div>
+                  <span class="inline-flex items-center justify-center gap-1.5 rounded-lg bg-accent-400 px-3 py-1.5 font-mono text-xs font-medium text-zinc-950">
+                    <svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>
+                    Download .zip
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ WHO IT'S FOR BAND ============ -->
+    <section class="border-b border-white/10 bg-zinc-950">
+      <div class="mx-auto max-w-7xl px-6 py-5 lg:px-8">
+        <p class="flex items-center justify-center gap-2.5 text-center text-sm leading-relaxed text-zinc-400">
+          <span class="flex h-5 w-5 shrink-0 items-center justify-center rounded border border-accent-400/30 bg-accent-400/10 text-accent-400">
+            <svg viewBox="0 0 24 24" class="h-3 w-3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          </span>
+          For anyone building or refreshing a website: designers, agencies, and the developers they hand work to.
+        </p>
+      </div>
+    </section>
+
+    <!-- ============ TRUST STRIP ============ -->
+    <section class="border-b border-white/10 bg-zinc-950">
+      <div class="mx-auto max-w-7xl px-6 py-6 lg:px-8">
+        <ul class="flex flex-wrap items-center justify-center gap-x-8 gap-y-3 font-mono text-xs text-zinc-500">
+          <li class="flex items-center gap-2"><span class="h-1 w-1 rounded-full bg-accent-400"></span>A typical page: <span class="tnum text-zinc-300">4.2&nbsp;MB</span> of images down to <span class="tnum text-accent-300">0.9&nbsp;MB</span></li>
+          <li class="flex items-center gap-2"><span class="h-1 w-1 rounded-full bg-accent-400"></span>No account and no ads</li>
+          <li class="flex items-center gap-2"><span class="h-1 w-1 rounded-full bg-accent-400"></span>Conversion runs in your browser</li>
+          <li class="flex items-center gap-2"><span class="h-1 w-1 rounded-full bg-accent-400"></span>Open source under MIT</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ============ WHAT MAKES IT DIFFERENT (COMPARISON) ============ -->
+    <section id="difference" class="border-b border-white/10 py-24 sm:py-32">
+      <div class="mx-auto max-w-7xl px-6 lg:px-8">
+        <div class="max-w-2xl">
+          <span class="font-mono text-xs font-medium uppercase tracking-widest text-accent-400">The difference</span>
+          <h2 class="mt-3 text-3xl font-semibold leading-tight tracking-tight text-zinc-50 sm:text-4xl">Other tools do a slice of this. ScrapeConvert does the whole job.</h2>
+        </div>
+
+        <!-- comparison table: horizontal-scroll on mobile, full grid on desktop -->
+        <div class="mt-12 overflow-hidden rounded-2xl border border-white/10">
+          <div class="overflow-x-auto">
+            <table class="w-full min-w-[680px] border-collapse text-left">
+              <thead>
+                <tr class="bg-zinc-900 font-mono text-xs uppercase tracking-wider text-zinc-400">
+                  <th scope="col" class="px-5 py-4 font-medium"><span class="sr-only">Capability</span></th>
+                  <th scope="col" class="px-5 py-4 text-center font-medium">A typical image grabber</th>
+                  <th scope="col" class="px-5 py-4 text-center font-medium">A typical converter</th>
+                  <th scope="col" class="bg-accent-400/[0.05] px-5 py-4 text-center font-medium text-accent-300">ScrapeConvert</th>
+                </tr>
+              </thead>
+              <tbody class="text-sm">
+                <!-- row 1 -->
+                <tr class="border-t border-white/10">
+                  <th scope="row" class="px-5 py-4 text-left font-normal text-zinc-300">Pulls images off a live site</th>
+                  <td class="px-5 py-4 text-center">
+                    <span class="inline-flex text-accent-400" aria-label="Yes"><svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span>
+                  </td>
+                  <td class="px-5 py-4 text-center">
+                    <span class="inline-flex text-zinc-600" aria-label="No"><svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"/></svg></span>
+                  </td>
+                  <td class="bg-accent-400/[0.05] px-5 py-4 text-center">
+                    <span class="inline-flex text-accent-400" aria-label="Yes"><svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span>
+                  </td>
+                </tr>
+                <!-- row 2 -->
+                <tr class="border-t border-white/10">
+                  <th scope="row" class="px-5 py-4 text-left font-normal text-zinc-300">Across many pages or a whole sitemap</th>
+                  <td class="px-5 py-4 text-center">
+                    <span class="inline-flex text-zinc-600" aria-label="No"><svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"/></svg></span>
+                  </td>
+                  <td class="px-5 py-4 text-center">
+                    <span class="inline-flex text-zinc-600" aria-label="No"><svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"/></svg></span>
+                  </td>
+                  <td class="bg-accent-400/[0.05] px-5 py-4 text-center">
+                    <span class="inline-flex text-accent-400" aria-label="Yes"><svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span>
+                  </td>
+                </tr>
+                <!-- row 3 -->
+                <tr class="border-t border-white/10">
+                  <th scope="row" class="px-5 py-4 text-left font-normal text-zinc-300">Flags duplicate images</th>
+                  <td class="px-5 py-4 text-center">
+                    <span class="inline-flex text-zinc-600" aria-label="No"><svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"/></svg></span>
+                  </td>
+                  <td class="px-5 py-4 text-center">
+                    <span class="inline-flex text-zinc-600" aria-label="No"><svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"/></svg></span>
+                  </td>
+                  <td class="bg-accent-400/[0.05] px-5 py-4 text-center">
+                    <span class="inline-flex text-accent-400" aria-label="Yes"><svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span>
+                  </td>
+                </tr>
+                <!-- row 4 -->
+                <tr class="border-t border-white/10">
+                  <th scope="row" class="px-5 py-4 text-left font-normal text-zinc-300">Converts and resizes them</th>
+                  <td class="px-5 py-4 text-center">
+                    <span class="inline-flex text-zinc-600" aria-label="No"><svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"/></svg></span>
+                  </td>
+                  <td class="px-5 py-4 text-center font-mono text-xs text-zinc-400">One at a time</td>
+                  <td class="bg-accent-400/[0.05] px-5 py-4 text-center font-mono text-xs text-accent-300">The whole batch at once</td>
+                </tr>
+                <!-- row 5 -->
+                <tr class="border-t border-white/10">
+                  <th scope="row" class="px-5 py-4 text-left font-normal text-zinc-300">Downloads everything in one step</th>
+                  <td class="px-5 py-4 text-center">
+                    <span class="inline-flex text-zinc-600" aria-label="No"><svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"/></svg></span>
+                  </td>
+                  <td class="px-5 py-4 text-center">
+                    <span class="inline-flex text-zinc-600" aria-label="No"><svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"/></svg></span>
+                  </td>
+                  <td class="bg-accent-400/[0.05] px-5 py-4 text-center font-mono text-xs text-accent-300">Yes, as one ZIP</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <p class="mt-6 max-w-3xl text-sm leading-relaxed text-zinc-400">
+          Most grabbers stop at the download. They have no duplicate handling and no batch mode, so you end up re-converting everything somewhere else. ScrapeConvert handles the extract, the dedupe, and the convert in one place, then hands you a single download.
+        </p>
+      </div>
+    </section>
+
+    <!-- ============ FEATURE: SCRAPER (LEADS THE BODY) ============ -->
+    <section id="scraper" class="border-b border-white/10 py-24 sm:py-32">
+      <div class="mx-auto max-w-7xl px-6 lg:px-8">
+        <div class="grid items-start gap-14 lg:grid-cols-2">
+
+          <div class="max-w-xl">
+            <span class="font-mono text-xs font-medium uppercase tracking-widest text-accent-400">Scraper</span>
+            <h2 class="mt-3 text-3xl font-semibold leading-tight tracking-tight text-zinc-50 sm:text-4xl">Find every image on a site, not just the easy ones.</h2>
+            <p class="mt-5 text-lg leading-relaxed text-zinc-400">
+              Give ScrapeConvert one URL, a list of URLs, or a sitemap. It pulls the images into a single grid, flags the duplicates, and hands your selection straight to the converter. No re-uploading and no copy-paste.
+            </p>
+
+            <ul class="mt-8 space-y-5">
+              <li class="flex gap-4">
+                <span class="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-accent-400/30 bg-accent-400/10 text-accent-400">
+                  <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 13h6"/><path d="M9 17h6"/></svg>
+                </span>
+                <div>
+                  <h3 class="font-medium text-zinc-100">One page, many pages, or the whole site</h3>
+                  <p class="mt-1 text-sm leading-relaxed text-zinc-400">Scrape a single page when that is all you need. Paste a list of URLs to pull from several pages at once. Or point it at a sitemap and it crawls the whole site, pulling images from every page it reaches. Most image tools can only do a single page, if they scrape at all.</p>
+                </div>
+              </li>
+              <li class="flex gap-4">
+                <span class="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-accent-400/30 bg-accent-400/10 text-accent-400">
+                  <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
+                </span>
+                <div>
+                  <h3 class="font-medium text-zinc-100">Finds images other tools miss</h3>
+                  <p class="mt-1 text-sm leading-relaxed text-zinc-400">It catches every visible <code class="rounded bg-zinc-900 px-1 py-0.5 font-mono text-[12px] text-zinc-300">&lt;img&gt;</code> on the page, plus the images set through CSS <code class="rounded bg-zinc-900 px-1 py-0.5 font-mono text-[12px] text-zinc-300">background-image</code>, which a lot of grabbers skip entirely. The images hiding in your stylesheets show up in the grid with the rest.</p>
+                </div>
+              </li>
+              <li class="flex gap-4">
+                <span class="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-accent-400/30 bg-accent-400/10 text-accent-400">
+                  <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M4 16V6a2 2 0 0 1 2-2h10"/></svg>
+                </span>
+                <div>
+                  <h3 class="font-medium text-zinc-100">Flags duplicates by content, not just filename</h3>
+                  <p class="mt-1 text-sm leading-relaxed text-zinc-400">The same photo often appears at several URLs and sizes, like a logo or a retina <code class="rounded bg-zinc-900 px-1 py-0.5 font-mono text-[12px] text-zinc-300">@2x</code> version. ScrapeConvert flags those repeats so you download each image once instead of three times.</p>
+                </div>
+              </li>
+              <li class="flex gap-4">
+                <span class="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-accent-400/30 bg-accent-400/10 text-accent-400">
+                  <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+                </span>
+                <div>
+                  <h3 class="font-medium text-zinc-100">Pick a batch and send it straight to the converter</h3>
+                  <p class="mt-1 text-sm leading-relaxed text-zinc-400">Filter by format or size, sort the grid, tick the images you want, and pass the whole selection into the converter in one move. Other grabbers stop at the download and leave the converting to you.</p>
+                </div>
+              </li>
+            </ul>
+
+            <div class="mt-8 rounded-xl border border-white/10 bg-zinc-900/60 p-4">
+              <div class="flex items-start gap-3">
+                <span class="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-md border border-white/10 bg-zinc-950 text-zinc-400">
+                  <svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                </span>
+                <p class="text-sm leading-relaxed text-zinc-400">
+                  ScrapeConvert pulls public images only and skips paid stock-photo sites, so the grab stays fair to the sites you point it at.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- scraper mini-mock -->
+          <div class="lg:pt-10">
+            <div class="overflow-hidden rounded-2xl border border-white/10 bg-zinc-900/80">
+              <div class="flex items-center justify-between border-b border-white/10 bg-zinc-900 px-4 py-3">
+                <span class="font-mono text-xs text-zinc-400">scraper · results</span>
+                <span class="font-mono text-[11px] text-zinc-500">42 / 45 reachable</span>
+              </div>
+              <div class="p-4">
+                <!-- filter row -->
+                <div class="flex flex-wrap items-center gap-2">
+                  <span class="rounded-md border border-accent-400/40 bg-accent-400/10 px-2.5 py-1 font-mono text-[11px] text-accent-300">all</span>
+                  <span class="rounded-md border border-white/10 bg-zinc-950 px-2.5 py-1 font-mono text-[11px] text-zinc-400">png</span>
+                  <span class="rounded-md border border-white/10 bg-zinc-950 px-2.5 py-1 font-mono text-[11px] text-zinc-400">jpeg</span>
+                  <span class="rounded-md border border-white/10 bg-zinc-950 px-2.5 py-1 font-mono text-[11px] text-zinc-400">webp</span>
+                  <span class="ml-auto rounded-md border border-white/10 bg-zinc-950 px-2.5 py-1 font-mono text-[11px] text-zinc-400">&gt; 100 KB</span>
+                </div>
+                <!-- list rows -->
+                <ul class="mt-4 divide-y divide-white/10 overflow-hidden rounded-lg border border-white/10">
+                  <li class="flex items-center gap-3 bg-zinc-950 px-3 py-2.5">
+                    <span class="h-8 w-10 shrink-0 rounded bg-gradient-to-br from-zinc-700 to-zinc-800"></span>
+                    <span class="min-w-0 flex-1 truncate font-mono text-[11px] text-zinc-300">/assets/hero-banner.png</span>
+                    <span class="rounded border border-white/10 px-1.5 py-0.5 font-mono text-[10px] text-zinc-400">PNG</span>
+                    <span class="tnum w-14 text-right font-mono text-[11px] text-zinc-500">1.2 MB</span>
+                  </li>
+                  <li class="flex items-center gap-3 bg-zinc-950 px-3 py-2.5">
+                    <span class="h-8 w-10 shrink-0 rounded bg-gradient-to-br from-zinc-600 to-zinc-700"></span>
+                    <span class="min-w-0 flex-1 truncate font-mono text-[11px] text-zinc-300">/css/bg-texture (background-image)</span>
+                    <span class="rounded border border-white/10 px-1.5 py-0.5 font-mono text-[10px] text-zinc-400">JPEG</span>
+                    <span class="tnum w-14 text-right font-mono text-[11px] text-zinc-500">540 KB</span>
+                  </li>
+                  <li class="flex items-center gap-3 bg-amber-400/[0.06] px-3 py-2.5">
+                    <span class="h-8 w-10 shrink-0 rounded bg-gradient-to-br from-zinc-700 to-zinc-800"></span>
+                    <span class="min-w-0 flex-1 truncate font-mono text-[11px] text-zinc-300">/img/team-photo@2x.jpg</span>
+                    <span class="rounded bg-amber-400/90 px-1.5 py-0.5 font-mono text-[10px] font-medium text-zinc-950">dupe</span>
+                    <span class="tnum w-14 text-right font-mono text-[11px] text-zinc-500">1.6 MB</span>
+                  </li>
+                  <li class="flex items-center gap-3 bg-zinc-950 px-3 py-2.5">
+                    <span class="h-8 w-10 shrink-0 rounded bg-gradient-to-br from-zinc-700 to-zinc-900"></span>
+                    <span class="min-w-0 flex-1 truncate font-mono text-[11px] text-zinc-300">/static/logo-mark.png</span>
+                    <span class="rounded border border-white/10 px-1.5 py-0.5 font-mono text-[10px] text-zinc-400">PNG</span>
+                    <span class="tnum w-14 text-right font-mono text-[11px] text-zinc-500">24 KB</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ FEATURE: CONVERTER ============ -->
+    <section id="converter" class="border-b border-white/10 py-24 sm:py-32">
+      <div class="mx-auto max-w-7xl px-6 lg:px-8">
+        <div class="grid items-start gap-14 lg:grid-cols-2">
+
+          <!-- converter mini-mock (left on desktop) -->
+          <div class="order-2 lg:order-1 lg:pt-10">
+            <div class="overflow-hidden rounded-2xl border border-white/10 bg-zinc-900/80">
+              <div class="flex items-center justify-between border-b border-white/10 bg-zinc-900 px-4 py-3">
+                <span class="font-mono text-xs text-zinc-400">converter · in your browser</span>
+                <span class="flex items-center gap-1.5 font-mono text-[11px] text-accent-300"><span class="h-1.5 w-1.5 rounded-full bg-accent-400"></span>runs locally</span>
+              </div>
+              <div class="space-y-4 p-4">
+                <!-- format toggle: now four formats -->
+                <div>
+                  <p class="mb-2 font-mono text-[11px] uppercase tracking-wider text-zinc-500">Output format</p>
+                  <div class="grid grid-cols-4 gap-2">
+                    <span class="rounded-lg border border-accent-400/40 bg-accent-400/10 py-2 text-center font-mono text-xs text-accent-300">WebP</span>
+                    <span class="rounded-lg border border-white/10 bg-zinc-950 py-2 text-center font-mono text-xs text-zinc-400">AVIF</span>
+                    <span class="rounded-lg border border-white/10 bg-zinc-950 py-2 text-center font-mono text-xs text-zinc-400">PNG</span>
+                    <span class="rounded-lg border border-white/10 bg-zinc-950 py-2 text-center font-mono text-xs text-zinc-400">JPEG</span>
+                  </div>
+                </div>
+                <!-- quality slider -->
+                <div>
+                  <div class="mb-2 flex items-center justify-between font-mono text-[11px] text-zinc-500">
+                    <span class="uppercase tracking-wider">Quality</span>
+                    <span class="tnum text-zinc-300">80%</span>
+                  </div>
+                  <div class="relative h-1.5 w-full rounded-full bg-zinc-800">
+                    <div class="absolute inset-y-0 left-0 w-[80%] rounded-full bg-accent-400"></div>
+                    <span class="absolute top-1/2 left-[80%] h-3.5 w-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-zinc-950 bg-accent-400"></span>
+                  </div>
+                </div>
+                <!-- resize -->
+                <div>
+                  <div class="mb-2 flex items-center justify-between font-mono text-[11px] text-zinc-500">
+                    <span class="uppercase tracking-wider">Resize (max, proportional)</span>
+                    <span class="flex items-center gap-1 text-accent-300"><svg viewBox="0 0 24 24" class="h-3 w-3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/></svg>lock ratio</span>
+                  </div>
+                  <div class="grid grid-cols-2 gap-2">
+                    <div class="flex items-center justify-between rounded-lg border border-white/10 bg-zinc-950 px-3 py-2 font-mono text-xs text-zinc-300"><span class="text-zinc-500">Max W</span><span class="tnum">1200</span></div>
+                    <div class="flex items-center justify-between rounded-lg border border-white/10 bg-zinc-950 px-3 py-2 font-mono text-xs text-zinc-300"><span class="text-zinc-500">Max H</span><span class="tnum">800</span></div>
+                  </div>
+                </div>
+                <!-- result -->
+                <div class="flex items-center justify-between rounded-lg border border-accent-400/30 bg-accent-400/[0.07] px-3 py-2.5">
+                  <span class="font-mono text-[11px] text-zinc-300">3 files · <span class="tnum">2.8 MB</span> → <span class="tnum text-accent-300">0.6 MB</span></span>
+                  <span class="inline-flex items-center gap-1.5 rounded-md bg-accent-400 px-2.5 py-1 font-mono text-[11px] font-medium text-zinc-950"><svg viewBox="0 0 24 24" class="h-3 w-3" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>zip</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="order-1 max-w-xl lg:order-2">
+            <span class="font-mono text-xs font-medium uppercase tracking-widest text-accent-400">Converter</span>
+            <h2 class="mt-3 text-3xl font-semibold leading-tight tracking-tight text-zinc-50 sm:text-4xl">Convert the whole batch in your browser.</h2>
+            <p class="mt-5 text-lg leading-relaxed text-zinc-400">
+              Pick a format, set the quality, resize if you need to, and download everything as one ZIP. The conversion runs on your own machine, so no server ever stores a copy of your images.
+            </p>
+
+            <ul class="mt-8 space-y-5">
+              <li class="flex gap-4">
+                <span class="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-accent-400/30 bg-accent-400/10 text-accent-400">
+                  <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5z"/><path d="M14 2v6h6"/></svg>
+                </span>
+                <div>
+                  <h3 class="font-medium text-zinc-100">WebP, AVIF, PNG, or JPEG</h3>
+                  <p class="mt-1 text-sm leading-relaxed text-zinc-400">Convert a whole batch to one format at once. WebP is usually the smallest for the web. AVIF goes smaller still where it is supported. PNG and JPEG are there when a project calls for them.</p>
+                </div>
+              </li>
+              <li class="flex gap-4">
+                <span class="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-accent-400/30 bg-accent-400/10 text-accent-400">
+                  <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>
+                </span>
+                <div>
+                  <h3 class="font-medium text-zinc-100">Tweak and re-run until it looks right</h3>
+                  <p class="mt-1 text-sm leading-relaxed text-zinc-400">Move the quality slider, change the size, and run it again. There is no upload step between tries, so you can dial in the result instead of guessing once and living with it.</p>
+                </div>
+              </li>
+              <li class="flex gap-4">
+                <span class="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-accent-400/30 bg-accent-400/10 text-accent-400">
+                  <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 14h6v6"/><path d="M20 10h-6V4"/><path d="m14 10 7-7"/><path d="m3 21 7-7"/></svg>
+                </span>
+                <div>
+                  <h3 class="font-medium text-zinc-100">Resize without stretching</h3>
+                  <p class="mt-1 text-sm leading-relaxed text-zinc-400">Set a max width or height and each image scales down proportionally, never up. Your heroes, thumbnails, and logos keep their shape.</p>
+                </div>
+              </li>
+              <li class="flex gap-4">
+                <span class="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-accent-400/30 bg-accent-400/10 text-accent-400">
+                  <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>
+                </span>
+                <div>
+                  <h3 class="font-medium text-zinc-100">One ZIP, no limits</h3>
+                  <p class="mt-1 text-sm leading-relaxed text-zinc-400">Download every converted file in a single archive. There are no file caps and no daily limits, no signup and no ads. Convert as many images as you want, as many times as you want.</p>
+                </div>
+              </li>
+            </ul>
+
+            <div class="mt-8 rounded-xl border border-accent-400/30 bg-accent-400/[0.06] p-4">
+              <div class="flex items-start gap-3">
+                <span class="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-md border border-accent-400/40 bg-accent-400/15 text-accent-300">
+                  <svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M9 9h6v6H9z"/></svg>
+                </span>
+                <p class="text-sm leading-relaxed text-zinc-300">
+                  Because the conversion happens in your browser, your image files are never uploaded and we never see them.
+                </p>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ WHY OPTIMIZE ============ -->
+    <section id="why" class="border-b border-white/10 py-24 sm:py-32">
+      <div class="mx-auto max-w-7xl px-6 lg:px-8">
+        <div class="max-w-2xl">
+          <span class="font-mono text-xs font-medium uppercase tracking-widest text-accent-400">Why bother</span>
+          <h2 class="mt-3 text-3xl font-semibold leading-tight tracking-tight text-zinc-50 sm:text-4xl">Lighter images make for faster pages and better ranking.</h2>
+          <p class="mt-5 text-lg leading-relaxed text-zinc-400">
+            Images are usually the heaviest part of a web page. A WebP file is typically 25-35% smaller than the same JPEG and 60-80% smaller than the same PNG, with no visible drop in quality. Lighter images load faster, search engines reward faster pages, and you pay less to serve them. For most sites this is the quickest speed win there is.
+          </p>
+          <p class="mt-6">
+            <a href="https://visseranalytics.com/blog/image-formats-guide-webp-png-jpg/" class="inline-flex items-center gap-1.5 font-mono text-sm text-accent-300 transition-colors duration-150 hover:text-accent-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950">
+              Read the guide: WebP vs PNG vs JPEG
+              <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+            </a>
+          </p>
+        </div>
+
+        <!-- WebP vs PNG loading simulator -->
+        <div class="mt-12 overflow-hidden rounded-2xl border border-white/10 bg-zinc-900/60">
+          <div class="flex items-center justify-between border-b border-white/10 bg-zinc-900 px-5 py-3">
+            <span class="font-mono text-xs text-zinc-400">Same photo, two formats</span>
+            <button id="sim-replay" type="button" class="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-zinc-950 px-3 py-1.5 font-mono text-xs text-zinc-300 transition-colors duration-150 hover:border-white/25 hover:text-zinc-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950">
+              <svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>
+              Replay
+            </button>
+          </div>
+          <div class="grid gap-px bg-white/10 sm:grid-cols-2">
+            <!-- PNG column -->
+            <div class="bg-zinc-900/60 p-5">
+              <div class="flex items-center justify-between">
+                <span class="font-mono text-sm text-zinc-200">PNG</span>
+                <span class="tnum font-mono text-xs text-zinc-500">1.2 MB</span>
+              </div>
+              <div class="sim-frame mt-3" data-format="png">
+                <div class="sim-photo"></div>
+                <div class="sim-mask" style="height: 55%;"></div>
+              </div>
+              <div class="mt-3 h-1 w-full overflow-hidden rounded-full bg-zinc-800">
+                <div class="sim-bar h-full rounded-full bg-zinc-500" data-format="png" style="width: 45%;"></div>
+              </div>
+              <div class="mt-2 flex items-center justify-between font-mono text-[11px]">
+                <span class="sim-status text-zinc-500" data-format="png">loading…</span>
+                <span class="sim-time tnum text-zinc-400" data-format="png">0.63s</span>
+              </div>
+            </div>
+            <!-- WebP column -->
+            <div class="bg-zinc-900/60 p-5">
+              <div class="flex items-center justify-between">
+                <span class="font-mono text-sm text-accent-300">WebP</span>
+                <span class="tnum font-mono text-xs text-zinc-500">240 KB</span>
+              </div>
+              <div class="sim-frame mt-3" data-format="webp">
+                <div class="sim-photo"></div>
+                <div class="sim-mask" style="height: 0%;"></div>
+              </div>
+              <div class="mt-3 h-1 w-full overflow-hidden rounded-full bg-zinc-800">
+                <div class="sim-bar h-full rounded-full bg-accent-400" data-format="webp" style="width: 100%;"></div>
+              </div>
+              <div class="mt-2 flex items-center justify-between font-mono text-[11px]">
+                <span class="sim-status text-accent-300" data-format="webp">done</span>
+                <span class="sim-time tnum text-zinc-300" data-format="webp">0.28s</span>
+              </div>
+            </div>
+          </div>
+          <p class="border-t border-white/10 px-5 py-3 text-center font-mono text-[11px] text-zinc-500">
+            This is an illustration of how a lighter file finishes first, not a live benchmark.
+          </p>
+        </div>
+
+        <div class="mt-14 grid gap-6 md:grid-cols-3">
+          <div class="rounded-2xl border border-white/10 bg-zinc-900/50 p-6">
+            <span class="flex h-10 w-10 items-center justify-center rounded-lg border border-accent-400/30 bg-accent-400/10 text-accent-400">
+              <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+            </span>
+            <h3 class="mt-5 text-lg font-medium text-zinc-100">Faster pages</h3>
+            <p class="mt-2 text-sm leading-relaxed text-zinc-400">Fewer bytes per image means the page paints sooner, even on a phone. Your main image often decides how fast the page feels (its Largest Contentful Paint).</p>
+          </div>
+          <div class="rounded-2xl border border-white/10 bg-zinc-900/50 p-6">
+            <span class="flex h-10 w-10 items-center justify-center rounded-lg border border-accent-400/30 bg-accent-400/10 text-accent-400">
+              <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17 9 11l4 4 8-8"/><path d="M17 7h4v4"/></svg>
+            </span>
+            <h3 class="mt-5 text-lg font-medium text-zinc-100">Better Google ranking</h3>
+            <p class="mt-2 text-sm leading-relaxed text-zinc-400">Search engines factor page speed into ranking (Core Web Vitals). Lighter images are one of the simplest ways to move that number.</p>
+          </div>
+          <div class="rounded-2xl border border-white/10 bg-zinc-900/50 p-6">
+            <span class="flex h-10 w-10 items-center justify-center rounded-lg border border-accent-400/30 bg-accent-400/10 text-accent-400">
+              <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 1v22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            </span>
+            <h3 class="mt-5 text-lg font-medium text-zinc-100">Lower hosting bills</h3>
+            <p class="mt-2 text-sm leading-relaxed text-zinc-400">Smaller files mean less data served on every visit, which trims your hosting and CDN costs over time.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ HOW IT WORKS ============ -->
+    <section id="how" class="border-b border-white/10 py-24 sm:py-32">
+      <div class="mx-auto max-w-7xl px-6 lg:px-8">
+        <div class="max-w-2xl">
+          <span class="font-mono text-xs font-medium uppercase tracking-widest text-accent-400">How it works</span>
+          <h2 class="mt-3 text-3xl font-semibold leading-tight tracking-tight text-zinc-50 sm:text-4xl">Three steps, start to ZIP.</h2>
+        </div>
+
+        <ol class="mt-14 grid gap-6 md:grid-cols-3">
+          <li class="rounded-2xl border border-white/10 bg-zinc-900/50 p-6">
+            <span class="flex h-9 w-9 items-center justify-center rounded-lg border border-accent-400/30 bg-accent-400/10 font-mono text-sm font-semibold text-accent-300">01</span>
+            <h3 class="mt-5 text-lg font-medium text-zinc-100">Paste a URL, a list, or a sitemap</h3>
+            <p class="mt-2 text-sm leading-relaxed text-zinc-400">Give it a page, several pages, or a whole site, and ScrapeConvert collects the images it finds.</p>
+          </li>
+          <li class="rounded-2xl border border-white/10 bg-zinc-900/50 p-6">
+            <span class="flex h-9 w-9 items-center justify-center rounded-lg border border-accent-400/30 bg-accent-400/10 font-mono text-sm font-semibold text-accent-300">02</span>
+            <h3 class="mt-5 text-lg font-medium text-zinc-100">Pick the ones you want</h3>
+            <p class="mt-2 text-sm leading-relaxed text-zinc-400">Sort by size, filter by format, skip the flagged duplicates, and select what matters.</p>
+          </li>
+          <li class="rounded-2xl border border-white/10 bg-zinc-900/50 p-6">
+            <span class="flex h-9 w-9 items-center justify-center rounded-lg border border-accent-400/30 bg-accent-400/10 font-mono text-sm font-semibold text-accent-300">03</span>
+            <h3 class="mt-5 text-lg font-medium text-zinc-100">Convert and download</h3>
+            <p class="mt-2 text-sm leading-relaxed text-zinc-400">Choose a format and quality, then download the batch as one ZIP. The conversion runs in your browser.</p>
+          </li>
+        </ol>
+      </div>
+    </section>
+
+    <!-- ============ PRIVACY EXPLAINER ============ -->
+    <section id="privacy" class="border-b border-white/10 py-24 sm:py-32">
+      <div class="mx-auto max-w-7xl px-6 lg:px-8">
+        <div class="grid gap-12 lg:grid-cols-[0.9fr_1.1fr] lg:gap-16">
+          <div class="max-w-md">
+            <span class="font-mono text-xs font-medium uppercase tracking-widest text-accent-400">Privacy</span>
+            <h2 class="mt-3 text-3xl font-semibold leading-tight tracking-tight text-zinc-50 sm:text-4xl">Your images stay on your machine.</h2>
+            <p class="mt-5 text-lg leading-relaxed text-zinc-400">
+              When you convert, the work happens inside your browser. Your image files are never uploaded and we never store a copy. There is no account to create, no ads, and no third-party trackers following you around.
+            </p>
+          </div>
+
+          <div class="grid gap-4 sm:grid-cols-2">
+            <!-- conversion card -->
+            <div class="rounded-2xl border border-accent-400/30 bg-accent-400/[0.06] p-6">
+              <span class="flex h-9 w-9 items-center justify-center rounded-lg border border-accent-400/40 bg-accent-400/15 text-accent-300">
+                <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M9 9h6v6H9z"/></svg>
+              </span>
+              <h3 class="mt-5 font-mono text-sm font-semibold text-accent-300">Conversion never leaves your browser</h3>
+              <p class="mt-2 text-sm leading-relaxed text-zinc-300">
+                Converting runs on your own device. The files you are working with are not sent to a server, and we never see them.
+              </p>
+            </div>
+            <!-- no-tracking card -->
+            <div class="rounded-2xl border border-white/10 bg-zinc-900/60 p-6">
+              <span class="flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 bg-zinc-950 text-zinc-400">
+                <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" x2="22" y1="2" y2="22"/></svg>
+              </span>
+              <h3 class="mt-5 font-mono text-sm font-semibold text-zinc-100">No accounts and no ad tracking</h3>
+              <p class="mt-2 text-sm leading-relaxed text-zinc-400">
+                You never sign up for anything. No ads and no third-party trackers, just privacy-friendly analytics so we can tell the tool is being used.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ FAQ ============ -->
+    <section id="faq" class="border-b border-white/10 py-24 sm:py-32">
+      <div class="mx-auto max-w-3xl px-6 lg:px-8">
+        <div class="max-w-2xl">
+          <span class="font-mono text-xs font-medium uppercase tracking-widest text-accent-400">FAQ</span>
+          <h2 class="mt-3 text-3xl font-semibold leading-tight tracking-tight text-zinc-50 sm:text-4xl">Questions, answered straight.</h2>
+        </div>
+
+        <div class="mt-12 divide-y divide-white/10 border-y border-white/10">
+          <details class="group py-5" open>
+            <summary class="flex cursor-pointer list-none items-center justify-between gap-4 rounded-lg text-left font-medium text-zinc-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950">
+              Is it free?
+              <svg viewBox="0 0 24 24" class="h-5 w-5 shrink-0 text-zinc-500 transition-transform duration-200 group-open:rotate-45" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+            </summary>
+            <p class="mt-3 max-w-prose text-sm leading-relaxed text-zinc-400">Yes, and it is open source under the MIT license. There are no file limits and no daily caps, and nothing is gated. If it saves you time, there is a buy-me-a-coffee link, but it is optional.</p>
+          </details>
+
+          <details class="group py-5">
+            <summary class="flex cursor-pointer list-none items-center justify-between gap-4 rounded-lg text-left font-medium text-zinc-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950">
+              Do you store my images?
+              <svg viewBox="0 0 24 24" class="h-5 w-5 shrink-0 text-zinc-500 transition-transform duration-200 group-open:rotate-45" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+            </summary>
+            <p class="mt-3 max-w-prose text-sm leading-relaxed text-zinc-400">No. Conversion runs in your browser, so those files never reach us. Scraping is different: the page and image fetches pass through a proxy on our side so your browser can reach other sites, but we do not keep them. Nothing is written to a database or a storage bucket.</p>
+          </details>
+
+          <details class="group py-5">
+            <summary class="flex cursor-pointer list-none items-center justify-between gap-4 rounded-lg text-left font-medium text-zinc-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950">
+              Can it really pull from any site?
+              <svg viewBox="0 0 24 24" class="h-5 w-5 shrink-0 text-zinc-500 transition-transform duration-200 group-open:rotate-45" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+            </summary>
+            <p class="mt-3 max-w-prose text-sm leading-relaxed text-zinc-400">It works on most public sites. To stay respectful and safe, the scraper skips paid stock-photo sites, refuses private and internal addresses, and rate-limits requests. A small bot check runs once per session so it cannot be turned into an abuse tool. Heavily protected sites may block automated fetches.</p>
+          </details>
+
+          <details class="group py-5">
+            <summary class="flex cursor-pointer list-none items-center justify-between gap-4 rounded-lg text-left font-medium text-zinc-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950">
+              How big a site can it handle?
+              <svg viewBox="0 0 24 24" class="h-5 w-5 shrink-0 text-zinc-500 transition-transform duration-200 group-open:rotate-45" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+            </summary>
+            <p class="mt-3 max-w-prose text-sm leading-relaxed text-zinc-400">It is built for real sites with many pages and thousands of images, including sitemaps with hundreds of URLs. Very large crawls run slower because of the rate limits above, but they will not fall over.</p>
+          </details>
+
+          <details class="group py-5">
+            <summary class="flex cursor-pointer list-none items-center justify-between gap-4 rounded-lg text-left font-medium text-zinc-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950">
+              Which formats does it convert to?
+              <svg viewBox="0 0 24 24" class="h-5 w-5 shrink-0 text-zinc-500 transition-transform duration-200 group-open:rotate-45" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+            </summary>
+            <p class="mt-3 max-w-prose text-sm leading-relaxed text-zinc-400">WebP, AVIF, PNG, and JPEG. WebP is usually the smallest for the web, and AVIF goes smaller still where the browser supports it. PNG and JPEG are there when a project calls for them.</p>
+          </details>
+
+          <details class="group py-5">
+            <summary class="flex cursor-pointer list-none items-center justify-between gap-4 rounded-lg text-left font-medium text-zinc-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950">
+              How does duplicate detection work?
+              <svg viewBox="0 0 24 24" class="h-5 w-5 shrink-0 text-zinc-500 transition-transform duration-200 group-open:rotate-45" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+            </summary>
+            <p class="mt-3 max-w-prose text-sm leading-relaxed text-zinc-400">It compares the image content, the file size and dimensions, not just the filename, so it catches the same picture served at different URLs and sizes, including retina <code class="rounded bg-zinc-900 px-1 py-0.5 font-mono text-[12px] text-zinc-300">@2x</code> and responsive variants.</p>
+          </details>
+
+          <details class="group py-5">
+            <summary class="flex cursor-pointer list-none items-center justify-between gap-4 rounded-lg text-left font-medium text-zinc-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950">
+              Why does scraping need a proxy?
+              <svg viewBox="0 0 24 24" class="h-5 w-5 shrink-0 text-zinc-500 transition-transform duration-200 group-open:rotate-45" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+            </summary>
+            <p class="mt-3 max-w-prose text-sm leading-relaxed text-zinc-400">Browsers enforce CORS, which stops a page from fetching content on other domains. A small proxy sits between your browser and the target site so the request can go through. That is the only thing it does, and it only touches scraping fetches, never your conversions.</p>
+          </details>
+
+          <details class="group py-5">
+            <summary class="flex cursor-pointer list-none items-center justify-between gap-4 rounded-lg text-left font-medium text-zinc-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950">
+              Is the scraping respectful?
+              <svg viewBox="0 0 24 24" class="h-5 w-5 shrink-0 text-zinc-500 transition-transform duration-200 group-open:rotate-45" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+            </summary>
+            <p class="mt-3 max-w-prose text-sm leading-relaxed text-zinc-400">We try hard to make it so. It pulls public images only, skips paid stock sites, refuses private addresses, and rate-limits requests so it stays light on the sites you point it at.</p>
+          </details>
+
+          <details class="group py-5">
+            <summary class="flex cursor-pointer list-none items-center justify-between gap-4 rounded-lg text-left font-medium text-zinc-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950">
+              Can I self-host it?
+              <svg viewBox="0 0 24 24" class="h-5 w-5 shrink-0 text-zinc-500 transition-transform duration-200 group-open:rotate-45" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+            </summary>
+            <p class="mt-3 max-w-prose text-sm leading-relaxed text-zinc-400">Yes. The app and the proxy both deploy on Cloudflare. Clone the repo, set up your own Worker, and you have a private instance with your own rate limits. The README walks through it.</p>
+          </details>
+
+          <details class="group py-5">
+            <summary class="flex cursor-pointer list-none items-center justify-between gap-4 rounded-lg text-left font-medium text-zinc-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950">
+              Is there a browser extension?
+              <svg viewBox="0 0 24 24" class="h-5 w-5 shrink-0 text-zinc-500 transition-transform duration-200 group-open:rotate-45" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+            </summary>
+            <p class="mt-3 max-w-prose text-sm leading-relaxed text-zinc-400">Yes, there is a free Chrome extension that scrapes the tab you are already on, so you do not have to paste a URL for pages you are browsing.</p>
+          </details>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ CLOSING CTA ============ -->
+    <section class="py-24 sm:py-32">
+      <div class="mx-auto max-w-7xl px-6 lg:px-8">
+        <div class="relative overflow-hidden rounded-2xl border border-white/10 bg-zinc-900/60 px-6 py-16 text-center sm:px-12">
+          <div class="grid-bg pointer-events-none absolute inset-0 [mask-image:radial-gradient(ellipse_at_center,black,transparent_75%)]" aria-hidden="true"></div>
+          <div class="relative mx-auto max-w-2xl">
+            <h2 class="text-3xl font-semibold leading-tight tracking-tight text-zinc-50 sm:text-4xl">Pull the images, then ship them web-ready.</h2>
+            <p class="mt-4 text-lg leading-relaxed text-zinc-400">Open the app in your browser. No account, nothing to install.</p>
+            <div class="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
+              <a href="#" class="inline-flex items-center justify-center gap-2 rounded-lg bg-accent-400 px-5 py-3 text-sm font-medium text-zinc-950 transition-colors duration-150 hover:bg-accent-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950">
+                Open the app, free
+                <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+              </a>
+              <a href="https://github.com/scrapeconvert" class="inline-flex items-center gap-1.5 rounded-lg px-1 py-1 font-mono text-sm text-zinc-400 transition-colors duration-150 hover:text-zinc-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950">
+                <svg viewBox="0 0 24 24" class="h-4 w-4" fill="currentColor" aria-hidden="true"><path d="M12 .5A11.5 11.5 0 0 0 .5 12a11.5 11.5 0 0 0 7.86 10.92c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.53-1.34-1.29-1.7-1.29-1.7-1.05-.72.08-.7.08-.7 1.16.08 1.78 1.2 1.78 1.2 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.56-.3-5.25-1.28-5.25-5.7 0-1.26.45-2.29 1.19-3.1-.12-.3-.52-1.48.11-3.08 0 0 .97-.31 3.18 1.18a11 11 0 0 1 5.8 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.6.23 2.78.11 3.08.74.81 1.19 1.84 1.19 3.1 0 4.43-2.7 5.4-5.27 5.69.41.36.78 1.06.78 2.14v3.18c0 .31.21.67.8.56A11.5 11.5 0 0 0 23.5 12 11.5 11.5 0 0 0 12 .5Z"/></svg>
+                View the source on GitHub
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ FOOTER ============ -->
+    <footer class="border-t border-white/10 bg-zinc-950">
+      <div class="mx-auto max-w-7xl px-6 py-14 lg:px-8">
+        <div class="flex flex-col gap-10 md:flex-row md:items-start md:justify-between">
+          <div class="max-w-sm">
+            <div class="flex items-center gap-2.5">
+              <span class="flex h-7 w-7 items-center justify-center rounded-md border border-accent-400/40 bg-accent-400/10">
+                <svg viewBox="0 0 24 24" class="h-4 w-4 text-accent-400" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 4 4 12l4 8"/><path d="m13 8 4 4-4 4"/></svg>
+              </span>
+              <span class="font-mono text-[15px] font-semibold tracking-tight text-zinc-50">ScrapeConvert</span>
+            </div>
+            <p class="mt-4 text-sm leading-relaxed text-zinc-400">A free, open-source tool for pulling images off the web and converting them in your browser. Made for people who build websites.</p>
+          </div>
+
+          <div class="grid grid-cols-2 gap-x-12 gap-y-8 sm:grid-cols-3">
+            <div>
+              <h3 class="font-mono text-xs uppercase tracking-wider text-zinc-500">Project</h3>
+              <ul class="mt-4 space-y-3 text-sm">
+                <li><a href="https://github.com/scrapeconvert" class="flex items-center gap-1.5 text-zinc-400 transition-colors duration-150 hover:text-zinc-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950"><svg viewBox="0 0 24 24" class="h-4 w-4" fill="currentColor" aria-hidden="true"><path d="M12 .5A11.5 11.5 0 0 0 .5 12a11.5 11.5 0 0 0 7.86 10.92c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.53-1.34-1.29-1.7-1.29-1.7-1.05-.72.08-.7.08-.7 1.16.08 1.78 1.2 1.78 1.2 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.56-.3-5.25-1.28-5.25-5.7 0-1.26.45-2.29 1.19-3.1-.12-.3-.52-1.48.11-3.08 0 0 .97-.31 3.18 1.18a11 11 0 0 1 5.8 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.6.23 2.78.11 3.08.74.81 1.19 1.84 1.19 3.1 0 4.43-2.7 5.4-5.27 5.69.41.36.78 1.06.78 2.14v3.18c0 .31.21.67.8.56A11.5 11.5 0 0 0 23.5 12 11.5 11.5 0 0 0 12 .5Z"/></svg>GitHub</a></li>
+                <li><a href="#" class="text-zinc-400 transition-colors duration-150 hover:text-zinc-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950">MIT license</a></li>
+                <li><a href="#" class="flex items-center gap-1.5 text-zinc-400 transition-colors duration-150 hover:text-zinc-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950"><svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4z"/><path d="M6 1v3"/><path d="M10 1v3"/><path d="M14 1v3"/></svg>Buy me a coffee</a></li>
+              </ul>
+            </div>
+            <div>
+              <h3 class="font-mono text-xs uppercase tracking-wider text-zinc-500">Product</h3>
+              <ul class="mt-4 space-y-3 text-sm">
+                <li><a href="#scraper" class="text-zinc-400 transition-colors duration-150 hover:text-zinc-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950">Scraper</a></li>
+                <li><a href="#converter" class="text-zinc-400 transition-colors duration-150 hover:text-zinc-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950">Converter</a></li>
+                <li><a href="#" class="text-zinc-400 transition-colors duration-150 hover:text-zinc-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950">Chrome extension</a></li>
+              </ul>
+            </div>
+            <div>
+              <h3 class="font-mono text-xs uppercase tracking-wider text-zinc-500">Legal</h3>
+              <ul class="mt-4 space-y-3 text-sm">
+                <li><a href="#" class="text-zinc-400 transition-colors duration-150 hover:text-zinc-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950">Privacy</a></li>
+                <li><a href="#" class="text-zinc-400 transition-colors duration-150 hover:text-zinc-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950">Terms</a></li>
+                <li><a href="#" class="text-zinc-400 transition-colors duration-150 hover:text-zinc-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950">Acceptable use</a></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-12 flex flex-col items-center justify-between gap-4 border-t border-white/10 pt-8 sm:flex-row">
+          <p class="font-mono text-xs text-zinc-500">© 2026 ScrapeConvert · MIT licensed · Made for people who build websites</p>
+          <p class="flex items-center gap-2 font-mono text-xs text-zinc-500"><span class="h-1.5 w-1.5 rounded-full bg-accent-400"></span>Privacy-friendly analytics only. No ad tracking.</p>
+        </div>
+      </div>
+    </footer>
+
+  </main>
+
+  <script>
+    (function () {
+      var btn = document.getElementById('sim-replay');
+      if (!btn) return;
+      function q(sel) { return document.querySelector(sel); }
+      var cols = {
+        png:  { dur: 1400, mask: q('.sim-frame[data-format="png"] .sim-mask'),  bar: q('.sim-bar[data-format="png"]'),  time: q('.sim-time[data-format="png"]'),  status: q('.sim-status[data-format="png"]') },
+        webp: { dur: 280,  mask: q('.sim-frame[data-format="webp"] .sim-mask'), bar: q('.sim-bar[data-format="webp"]'), time: q('.sim-time[data-format="webp"]'), status: q('.sim-status[data-format="webp"]') }
+      };
+      function play() {
+        Object.keys(cols).forEach(function (k) {
+          var c = cols[k];
+          if (!c.mask || !c.bar) return;
+          c.mask.style.transition = 'none';
+          c.mask.style.height = '100%';
+          c.bar.style.transition = 'none';
+          c.bar.style.width = '0%';
+          if (c.status) c.status.textContent = 'loading…';
+          void c.mask.offsetWidth;
+          var start = performance.now();
+          c.mask.style.transition = 'height ' + c.dur + 'ms linear';
+          c.bar.style.transition = 'width ' + c.dur + 'ms linear';
+          c.mask.style.height = '0%';
+          c.bar.style.width = '100%';
+          (function tick(now) {
+            var elapsed = now - start;
+            if (c.time) c.time.textContent = (Math.min(elapsed, c.dur) / 1000).toFixed(2) + 's';
+            if (elapsed < c.dur) { requestAnimationFrame(tick); }
+            else if (c.status) { c.status.textContent = 'done'; }
+          })(start);
+        });
+      }
+      btn.addEventListener('click', play);
+    })();
+  </script>
+</body>
+</html>

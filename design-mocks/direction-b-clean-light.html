@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ScrapeConvert: Pull images from any site and convert them in your browser</title>
+  <meta name="description" content="ScrapeConvert is a free, open-source tool. Scrape images from any URL or sitemap, then convert them to WebP, PNG, or JPEG right in your browser. No account, no ads." />
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <!-- Tailwind -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            accent: {
+              50: '#eff6ff',
+              100: '#dbeafe',
+              200: '#bfdbfe',
+              300: '#93c5fd',
+              400: '#60a5fa',
+              500: '#3b82f6',
+              600: '#2563eb',
+              700: '#1d4ed8',
+              800: '#1e40af',
+            },
+          },
+          fontFamily: {
+            sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+          },
+        },
+      },
+    };
+  </script>
+  <style>
+    body { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+    /* Subtle checkerboard for transparency preview tiles */
+    .checker {
+      background-image:
+        linear-gradient(45deg, #e2e8f0 25%, transparent 25%),
+        linear-gradient(-45deg, #e2e8f0 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, #e2e8f0 75%),
+        linear-gradient(-45deg, transparent 75%, #e2e8f0 75%);
+      background-size: 12px 12px;
+      background-position: 0 0, 0 6px, 6px -6px, -6px 0px;
+    }
+    details > summary { list-style: none; }
+    details > summary::-webkit-details-marker { display: none; }
+    details[open] .faq-chevron { transform: rotate(180deg); }
+  </style>
+</head>
+
+<body class="bg-white font-sans text-slate-700 antialiased">
+
+  <!-- Skip link -->
+  <a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-accent-600 focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-white">Skip to content</a>
+
+  <!-- ============ STICKY NAV ============ -->
+  <header class="sticky top-0 z-40 border-b border-slate-200/80 bg-white/90 backdrop-blur supports-[backdrop-filter]:bg-white/75">
+    <nav class="mx-auto flex h-16 max-w-7xl items-center justify-between px-6 lg:px-8" aria-label="Primary">
+      <!-- Wordmark -->
+      <a href="#" class="group flex items-center gap-2 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-600 focus-visible:ring-offset-2">
+        <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-accent-600 text-white" aria-hidden="true">
+          <!-- arrows / convert mark -->
+          <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 9h12l-3-3" />
+            <path d="M20 15H8l3 3" />
+          </svg>
+        </span>
+        <span class="text-base font-semibold tracking-tight text-slate-900">ScrapeConvert</span>
+      </a>
+
+      <!-- Desktop links -->
+      <div class="hidden items-center gap-8 md:flex">
+        <a href="#scraper" class="rounded-md text-sm font-medium text-slate-600 transition-colors duration-150 hover:text-slate-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-600 focus-visible:ring-offset-2">Scraper</a>
+        <a href="#converter" class="rounded-md text-sm font-medium text-slate-600 transition-colors duration-150 hover:text-slate-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-600 focus-visible:ring-offset-2">Converter</a>
+        <a href="#how" class="rounded-md text-sm font-medium text-slate-600 transition-colors duration-150 hover:text-slate-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-600 focus-visible:ring-offset-2">How it works</a>
+        <a href="#faq" class="rounded-md text-sm font-medium text-slate-600 transition-colors duration-150 hover:text-slate-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-600 focus-visible:ring-offset-2">FAQ</a>
+        <a href="https://github.com" class="inline-flex items-center gap-1.5 rounded-md text-sm font-medium text-slate-600 transition-colors duration-150 hover:text-slate-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-600 focus-visible:ring-offset-2">
+          <svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5C5.73.5.5 5.73.5 12.01c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.56 0-.27-.01-1-.02-1.95-3.2.69-3.87-1.54-3.87-1.54-.52-1.33-1.28-1.69-1.28-1.69-1.05-.71.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.28 1.19-3.09-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11 11 0 0 1 5.8 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.12 3.05.74.81 1.18 1.83 1.18 3.09 0 4.42-2.69 5.39-5.25 5.68.41.36.78 1.06.78 2.14 0 1.55-.01 2.8-.01 3.18 0 .31.21.68.8.56A11.52 11.52 0 0 0 23.5 12C23.5 5.73 18.27.5 12 .5Z"/></svg>
+          GitHub
+        </a>
+      </div>
+
+      <!-- CTA + mobile menu -->
+      <div class="flex items-center gap-3">
+        <a href="#" class="hidden rounded-lg bg-accent-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors duration-150 hover:bg-accent-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-600 focus-visible:ring-offset-2 sm:inline-flex">Open the app</a>
+        <button type="button" id="menuBtn" class="inline-flex h-10 w-10 items-center justify-center rounded-lg text-slate-600 transition-colors duration-150 hover:bg-slate-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-600 focus-visible:ring-offset-2 md:hidden" aria-label="Open menu" aria-expanded="false" aria-controls="mobileMenu">
+          <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+        </button>
+      </div>
+    </nav>
+
+    <!-- Mobile menu -->
+    <div id="mobileMenu" class="hidden border-t border-slate-200/80 bg-white md:hidden">
+      <div class="space-y-1 px-6 py-4">
+        <a href="#scraper" class="block rounded-lg px-3 py-2.5 text-base font-medium text-slate-700 transition-colors hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-600">Scraper</a>
+        <a href="#converter" class="block rounded-lg px-3 py-2.5 text-base font-medium text-slate-700 transition-colors hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-600">Converter</a>
+        <a href="#how" class="block rounded-lg px-3 py-2.5 text-base font-medium text-slate-700 transition-colors hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-600">How it works</a>
+        <a href="#faq" class="block rounded-lg px-3 py-2.5 text-base font-medium text-slate-700 transition-colors hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-600">FAQ</a>
+        <a href="https://github.com" class="block rounded-lg px-3 py-2.5 text-base font-medium text-slate-700 transition-colors hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-600">GitHub</a>
+        <a href="#" class="mt-2 block rounded-lg bg-accent-600 px-3 py-2.5 text-center text-base font-semibold text-white transition-colors hover:bg-accent-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-600 focus-visible:ring-offset-2">Open the app</a>
+      </div>
+    </div>
+  </header>
+
+  <main id="main">
+
+    <!-- ============ HERO ============ -->
+    <section class="relative overflow-hidden">
+      <div class="mx-auto max-w-7xl px-6 py-20 sm:py-28 lg:px-8 lg:py-32">
+        <div class="grid items-center gap-16 lg:grid-cols-2 lg:gap-12">
+
+          <!-- Left: copy -->
+          <div class="max-w-xl">
+            <span class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-600">
+              <span class="h-1.5 w-1.5 rounded-full bg-accent-600" aria-hidden="true"></span>
+              Free and open source, MIT licensed
+            </span>
+
+            <h1 class="mt-6 text-4xl font-semibold leading-tight tracking-tight text-slate-900 sm:text-5xl sm:leading-[1.08]">
+              Grab images from any site, then convert them in your browser.
+            </h1>
+
+            <p class="mt-6 max-w-prose text-lg leading-relaxed text-slate-600">
+              Paste a URL or a sitemap and ScrapeConvert pulls every image off the page. Pick the ones you want, then convert them to WebP, PNG, or JPEG. The conversion runs locally, so those image bytes stay on your machine.
+            </p>
+
+            <div class="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
+              <a href="#" class="inline-flex items-center justify-center gap-2 rounded-lg bg-accent-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition-colors duration-150 hover:bg-accent-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-600 focus-visible:ring-offset-2">
+                Open ScrapeConvert
+                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+              </a>
+              <a href="https://github.com" class="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition-colors duration-150 hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-600 focus-visible:ring-offset-2">
+                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5C5.73.5.5 5.73.5 12.01c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.56 0-.27-.01-1-.02-1.95-3.2.69-3.87-1.54-3.87-1.54-.52-1.33-1.28-1.69-1.28-1.69-1.05-.71.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.28 1.19-3.09-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11 11 0 0 1 5.8 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.12 3.05.74.81 1.18 1.83 1.18 3.09 0 4.42-2.69 5.39-5.25 5.68.41.36.78 1.06.78 2.14 0 1.55-.01 2.8-.01 3.18 0 .31.21.68.8.56A11.52 11.52 0 0 0 23.5 12C23.5 5.73 18.27.5 12 .5Z"/></svg>
+                View on GitHub
+              </a>
+            </div>
+
+            <p class="mt-6 text-sm text-slate-500">No account. Nothing to install. Works in Chrome, Firefox, and Safari.</p>
+          </div>
+
+          <!-- Right: faux app window -->
+          <div class="relative">
+            <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl shadow-slate-900/5">
+              <!-- Window chrome -->
+              <div class="flex items-center gap-2 border-b border-slate-200 bg-slate-50 px-4 py-3">
+                <span class="h-3 w-3 rounded-full bg-slate-300" aria-hidden="true"></span>
+                <span class="h-3 w-3 rounded-full bg-slate-300" aria-hidden="true"></span>
+                <span class="h-3 w-3 rounded-full bg-slate-300" aria-hidden="true"></span>
+                <span class="ml-3 truncate text-xs font-medium text-slate-400">scrapeconvert.com/app</span>
+              </div>
+
+              <!-- App body -->
+              <div class="space-y-4 p-4 sm:p-5">
+                <!-- URL input row -->
+                <div class="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 p-1.5">
+                  <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-white text-slate-400" aria-hidden="true">
+                    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/></svg>
+                  </span>
+                  <span class="truncate text-sm text-slate-600">https://example.com/blog/launch-photos</span>
+                  <span class="ml-auto shrink-0 rounded-md bg-accent-600 px-3 py-1.5 text-xs font-semibold text-white">Scrape</span>
+                </div>
+
+                <!-- Status line -->
+                <div class="flex items-center justify-between text-xs">
+                  <span class="inline-flex items-center gap-1.5 text-slate-500">
+                    <span class="h-1.5 w-1.5 rounded-full bg-accent-600" aria-hidden="true"></span>
+                    18 images found
+                  </span>
+                  <span class="text-slate-400">2 duplicates flagged</span>
+                </div>
+
+                <!-- Image tile grid (drawn with CSS, no external images) -->
+                <div class="grid grid-cols-3 gap-2.5">
+                  <!-- tile 1 -->
+                  <figure class="overflow-hidden rounded-lg border border-slate-200">
+                    <div class="relative h-16 bg-gradient-to-br from-slate-200 to-slate-300">
+                      <span class="absolute left-1.5 top-1.5 rounded-md bg-white/90 px-1.5 py-0.5 text-[10px] font-medium text-slate-600">JPEG</span>
+                      <span class="absolute right-1.5 top-1.5 flex h-4 w-4 items-center justify-center rounded-md border border-accent-600 bg-accent-600 text-white" aria-hidden="true">
+                        <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg>
+                      </span>
+                    </div>
+                    <figcaption class="px-1.5 py-1 text-[10px] text-slate-500">1600×900 · 420 KB</figcaption>
+                  </figure>
+                  <!-- tile 2 -->
+                  <figure class="overflow-hidden rounded-lg border border-slate-200">
+                    <div class="relative h-16 checker bg-slate-100">
+                      <span class="absolute left-1.5 top-1.5 rounded-md bg-white/90 px-1.5 py-0.5 text-[10px] font-medium text-slate-600">PNG</span>
+                      <span class="absolute right-1.5 top-1.5 flex h-4 w-4 items-center justify-center rounded-md border border-accent-600 bg-accent-600 text-white" aria-hidden="true">
+                        <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg>
+                      </span>
+                    </div>
+                    <figcaption class="px-1.5 py-1 text-[10px] text-slate-500">512×512 · 88 KB</figcaption>
+                  </figure>
+                  <!-- tile 3 -->
+                  <figure class="overflow-hidden rounded-lg border border-slate-200">
+                    <div class="relative h-16 bg-gradient-to-br from-accent-100 to-accent-200">
+                      <span class="absolute left-1.5 top-1.5 rounded-md bg-white/90 px-1.5 py-0.5 text-[10px] font-medium text-slate-600">WebP</span>
+                      <span class="absolute right-1.5 top-1.5 flex h-4 w-4 items-center justify-center rounded-md border border-slate-300 bg-white" aria-hidden="true"></span>
+                    </div>
+                    <figcaption class="px-1.5 py-1 text-[10px] text-slate-500">800×600 · 64 KB</figcaption>
+                  </figure>
+                  <!-- tile 4 -->
+                  <figure class="overflow-hidden rounded-lg border border-slate-200">
+                    <div class="relative h-16 bg-gradient-to-br from-slate-300 to-slate-400">
+                      <span class="absolute left-1.5 top-1.5 rounded-md bg-white/90 px-1.5 py-0.5 text-[10px] font-medium text-slate-600">JPEG</span>
+                      <span class="absolute right-1.5 top-1.5 flex h-4 w-4 items-center justify-center rounded-md border border-accent-600 bg-accent-600 text-white" aria-hidden="true">
+                        <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg>
+                      </span>
+                    </div>
+                    <figcaption class="px-1.5 py-1 text-[10px] text-slate-500">2400×1600 · 1.2 MB</figcaption>
+                  </figure>
+                  <!-- tile 5 (duplicate flag) -->
+                  <figure class="overflow-hidden rounded-lg border border-amber-300">
+                    <div class="relative h-16 bg-gradient-to-br from-slate-200 to-slate-300">
+                      <span class="absolute left-1.5 top-1.5 rounded-md bg-white/90 px-1.5 py-0.5 text-[10px] font-medium text-slate-600">JPEG</span>
+                      <span class="absolute right-1.5 top-1.5 rounded-md bg-amber-400 px-1.5 py-0.5 text-[10px] font-semibold text-amber-950">dupe</span>
+                    </div>
+                    <figcaption class="px-1.5 py-1 text-[10px] text-slate-500">1600×900 · 421 KB</figcaption>
+                  </figure>
+                  <!-- tile 6 -->
+                  <figure class="overflow-hidden rounded-lg border border-slate-200">
+                    <div class="relative h-16 bg-gradient-to-br from-accent-200 to-accent-300">
+                      <span class="absolute left-1.5 top-1.5 rounded-md bg-white/90 px-1.5 py-0.5 text-[10px] font-medium text-slate-600">PNG</span>
+                      <span class="absolute right-1.5 top-1.5 flex h-4 w-4 items-center justify-center rounded-md border border-accent-600 bg-accent-600 text-white" aria-hidden="true">
+                        <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg>
+                      </span>
+                    </div>
+                    <figcaption class="px-1.5 py-1 text-[10px] text-slate-500">1024×768 · 210 KB</figcaption>
+                  </figure>
+                </div>
+
+                <!-- Convert control bar -->
+                <div class="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                  <div class="flex items-center justify-between">
+                    <span class="text-xs font-medium text-slate-600">4 selected</span>
+                    <div class="flex items-center gap-1.5 rounded-md border border-slate-200 bg-white p-0.5 text-[11px] font-medium">
+                      <span class="rounded-md bg-accent-600 px-2 py-1 text-white">WebP</span>
+                      <span class="px-2 py-1 text-slate-500">PNG</span>
+                      <span class="px-2 py-1 text-slate-500">JPEG</span>
+                    </div>
+                  </div>
+                  <!-- quality slider -->
+                  <div class="mt-3">
+                    <div class="flex items-center justify-between text-[11px] text-slate-500">
+                      <span>Quality</span>
+                      <span class="font-medium text-slate-700">80%</span>
+                    </div>
+                    <div class="mt-1.5 h-1.5 w-full rounded-full bg-slate-200">
+                      <div class="h-1.5 w-4/5 rounded-full bg-accent-600"></div>
+                    </div>
+                  </div>
+                  <button type="button" tabindex="-1" class="mt-3 w-full rounded-md bg-accent-600 px-3 py-2 text-xs font-semibold text-white">Convert to WebP and download .zip</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- local badge floating -->
+            <div class="absolute -bottom-4 -left-4 hidden items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2 shadow-lg shadow-slate-900/5 sm:flex">
+              <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-accent-50 text-accent-600" aria-hidden="true">
+                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/></svg>
+              </span>
+              <span class="text-xs font-medium text-slate-700">Conversion runs on your machine</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ TRUST STRIP ============ -->
+    <section class="border-y border-slate-200 bg-slate-50">
+      <div class="mx-auto max-w-7xl px-6 py-6 lg:px-8">
+        <ul class="flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-sm font-medium text-slate-600">
+          <li class="inline-flex items-center gap-2">
+            <svg class="h-4 w-4 text-accent-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+            No accounts
+          </li>
+          <li class="inline-flex items-center gap-2">
+            <svg class="h-4 w-4 text-accent-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+            No ads, no tracking
+          </li>
+          <li class="inline-flex items-center gap-2">
+            <svg class="h-4 w-4 text-accent-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+            Conversion runs locally
+          </li>
+          <li class="inline-flex items-center gap-2">
+            <svg class="h-4 w-4 text-accent-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+            Open source on GitHub
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ============ FEATURE: SCRAPER ============ -->
+    <section id="scraper" class="scroll-mt-20 py-24 sm:py-32">
+      <div class="mx-auto max-w-7xl px-6 lg:px-8">
+        <div class="grid items-center gap-16 lg:grid-cols-2">
+
+          <!-- Left: copy -->
+          <div class="max-w-xl">
+            <p class="text-sm font-semibold uppercase tracking-wide text-accent-600">Scraper</p>
+            <h2 class="mt-3 text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">Pull every image off a page without saving them one by one.</h2>
+            <p class="mt-5 max-w-prose text-lg leading-relaxed text-slate-600">
+              Paste a single URL, a list of URLs, or a sitemap. ScrapeConvert reads each page and collects the images it finds. From there you can sort the set by size and trim it down before you do anything with it.
+            </p>
+
+            <ul class="mt-8 space-y-5">
+              <li class="flex gap-4">
+                <span class="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent-50 text-accent-600" aria-hidden="true">
+                  <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>
+                </span>
+                <div>
+                  <h3 class="font-semibold text-slate-900">URLs or a whole sitemap</h3>
+                  <p class="mt-1 max-w-prose text-slate-600">Feed it one page or point it at a sitemap to walk a site. It queues the pages and reports what it finds.</p>
+                </div>
+              </li>
+              <li class="flex gap-4">
+                <span class="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent-50 text-accent-600" aria-hidden="true">
+                  <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M7 12h10M11 18h2"/></svg>
+                </span>
+                <div>
+                  <h3 class="font-semibold text-slate-900">Filter and catch duplicates</h3>
+                  <p class="mt-1 max-w-prose text-slate-600">Narrow the list by format or size. When the same image shows up twice, it gets flagged so it doesn't clutter your batch.</p>
+                </div>
+              </li>
+              <li class="flex gap-4">
+                <span class="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent-50 text-accent-600" aria-hidden="true">
+                  <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                </span>
+                <div>
+                  <h3 class="font-semibold text-slate-900">Hand the selection to the converter</h3>
+                  <p class="mt-1 max-w-prose text-slate-600">Tick the images you want and send them straight into the converter. No re-downloading, no file juggling.</p>
+                </div>
+              </li>
+            </ul>
+
+            <!-- proxy / trust note -->
+            <div class="mt-8 flex gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+              <svg class="mt-0.5 h-5 w-5 shrink-0 text-accent-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/></svg>
+              <p class="text-sm leading-relaxed text-slate-600">
+                Browsers block scripts from reading another site's images directly, so the fetches run through our own proxy to get around that limit. The proxy is rate-limited, asks for a quick one-time bot check per session, and pulls public images only. It skips paid stock-photo sites and private addresses.
+              </p>
+            </div>
+          </div>
+
+          <!-- Right: scraper visual -->
+          <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+            <!-- input -->
+            <label class="text-xs font-medium text-slate-500">Pages to scrape</label>
+            <div class="mt-1.5 rounded-lg border border-slate-200 bg-slate-50 p-3 font-mono text-xs leading-relaxed text-slate-600">
+              <span class="block">https://example.com/sitemap.xml</span>
+              <span class="block">https://example.com/products/spring</span>
+              <span class="block text-slate-400">https://example.com/lookbook</span>
+            </div>
+
+            <!-- filter chips -->
+            <div class="mt-4 flex flex-wrap items-center gap-2">
+              <span class="rounded-full bg-accent-600 px-2.5 py-1 text-xs font-medium text-white">All formats</span>
+              <span class="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-600">WebP</span>
+              <span class="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-600">PNG</span>
+              <span class="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-600">JPEG</span>
+              <span class="ml-auto rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-600">Largest first</span>
+            </div>
+
+            <!-- result rows -->
+            <div class="mt-4 divide-y divide-slate-100 overflow-hidden rounded-lg border border-slate-200">
+              <!-- row -->
+              <div class="flex items-center gap-3 px-3 py-2.5">
+                <span class="h-9 w-9 shrink-0 rounded-md bg-gradient-to-br from-slate-200 to-slate-300" aria-hidden="true"></span>
+                <div class="min-w-0 flex-1">
+                  <p class="truncate text-xs font-medium text-slate-700">hero-spring-2024.jpg</p>
+                  <p class="text-[11px] text-slate-400">2400×1600 · 1.2 MB</p>
+                </div>
+                <span class="rounded-md bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-500">JPEG</span>
+              </div>
+              <div class="flex items-center gap-3 px-3 py-2.5">
+                <span class="h-9 w-9 shrink-0 checker rounded-md bg-slate-100" aria-hidden="true"></span>
+                <div class="min-w-0 flex-1">
+                  <p class="truncate text-xs font-medium text-slate-700">logo-mark.png</p>
+                  <p class="text-[11px] text-slate-400">512×512 · 88 KB</p>
+                </div>
+                <span class="rounded-md bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-500">PNG</span>
+              </div>
+              <div class="flex items-center gap-3 bg-amber-50/60 px-3 py-2.5">
+                <span class="h-9 w-9 shrink-0 rounded-md bg-gradient-to-br from-slate-200 to-slate-300" aria-hidden="true"></span>
+                <div class="min-w-0 flex-1">
+                  <p class="truncate text-xs font-medium text-slate-700">hero-spring-2024-copy.jpg</p>
+                  <p class="text-[11px] text-amber-700">Duplicate of hero-spring-2024.jpg</p>
+                </div>
+                <span class="rounded-md bg-amber-200 px-1.5 py-0.5 text-[10px] font-semibold text-amber-900">dupe</span>
+              </div>
+              <div class="flex items-center gap-3 px-3 py-2.5">
+                <span class="h-9 w-9 shrink-0 rounded-md bg-gradient-to-br from-accent-100 to-accent-200" aria-hidden="true"></span>
+                <div class="min-w-0 flex-1">
+                  <p class="truncate text-xs font-medium text-slate-700">product-detail-03.webp</p>
+                  <p class="text-[11px] text-slate-400">800×600 · 64 KB</p>
+                </div>
+                <span class="rounded-md bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-500">WebP</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ FEATURE: CONVERTER ============ -->
+    <section id="converter" class="scroll-mt-20 border-t border-slate-200 bg-slate-50 py-24 sm:py-32">
+      <div class="mx-auto max-w-7xl px-6 lg:px-8">
+        <div class="grid items-center gap-16 lg:grid-cols-2">
+
+          <!-- Left: converter visual (order swapped on lg) -->
+          <div class="order-last rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6 lg:order-first">
+            <!-- format toggle -->
+            <div class="flex items-center justify-between">
+              <span class="text-sm font-medium text-slate-700">Output format</span>
+              <div class="flex items-center gap-1 rounded-lg border border-slate-200 bg-slate-50 p-1 text-xs font-medium">
+                <span class="rounded-md bg-accent-600 px-3 py-1.5 text-white">WebP</span>
+                <span class="px-3 py-1.5 text-slate-500">PNG</span>
+                <span class="px-3 py-1.5 text-slate-500">JPEG</span>
+              </div>
+            </div>
+
+            <!-- quality -->
+            <div class="mt-6">
+              <div class="flex items-center justify-between text-sm">
+                <span class="font-medium text-slate-700">Quality</span>
+                <span class="font-medium text-accent-600">80%</span>
+              </div>
+              <div class="mt-2 h-2 w-full rounded-full bg-slate-200">
+                <div class="relative h-2 w-4/5 rounded-full bg-accent-600">
+                  <span class="absolute -right-1.5 -top-1 h-4 w-4 rounded-full border-2 border-accent-600 bg-white shadow-sm" aria-hidden="true"></span>
+                </div>
+              </div>
+              <div class="mt-1.5 flex justify-between text-[11px] text-slate-400"><span>10%</span><span>100%</span></div>
+            </div>
+
+            <!-- resize -->
+            <div class="mt-6">
+              <div class="flex items-center justify-between text-sm">
+                <span class="font-medium text-slate-700">Resize</span>
+                <span class="inline-flex items-center gap-1.5 text-xs text-slate-500">
+                  <svg class="h-3.5 w-3.5 text-accent-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                  Aspect ratio locked
+                </span>
+              </div>
+              <div class="mt-2 grid grid-cols-2 gap-3">
+                <div class="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm">
+                  <span class="block text-[11px] text-slate-400">Width</span>
+                  <span class="font-medium text-slate-700">1200 px</span>
+                </div>
+                <div class="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm">
+                  <span class="block text-[11px] text-slate-400">Height</span>
+                  <span class="font-medium text-slate-700">800 px</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- batch summary -->
+            <div class="mt-6 rounded-lg border border-slate-200 bg-slate-50 p-3">
+              <div class="flex items-center justify-between text-sm">
+                <span class="text-slate-600">12 images · 8.4 MB</span>
+                <span class="inline-flex items-center gap-1.5 font-medium text-accent-600">
+                  <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M19 12l-7 7-7-7"/></svg>
+                  est. 2.1 MB after
+                </span>
+              </div>
+            </div>
+
+            <button type="button" tabindex="-1" class="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-accent-600 px-4 py-2.5 text-sm font-semibold text-white">
+              <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>
+              Convert and download .zip
+            </button>
+          </div>
+
+          <!-- Right: copy -->
+          <div class="max-w-xl">
+            <p class="text-sm font-semibold uppercase tracking-wide text-accent-600">Converter</p>
+            <h2 class="mt-3 text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">Convert a whole batch, then download one ZIP.</h2>
+            <p class="mt-5 max-w-prose text-lg leading-relaxed text-slate-600">
+              Drop in your own files or use the images you scraped. Choose a format, set the quality, resize if you need to, and convert the whole set at once. The work happens in your browser using WebAssembly codecs, so nothing gets uploaded.
+            </p>
+
+            <dl class="mt-8 grid gap-x-8 gap-y-6 sm:grid-cols-2">
+              <div>
+                <dt class="font-semibold text-slate-900">WebP, PNG, or JPEG</dt>
+                <dd class="mt-1 text-slate-600">Pick the format that fits where the image is going.</dd>
+              </div>
+              <div>
+                <dt class="font-semibold text-slate-900">Quality from 10 to 100%</dt>
+                <dd class="mt-1 text-slate-600">Trade file size for sharpness with one slider, applied to the whole batch.</dd>
+              </div>
+              <div>
+                <dt class="font-semibold text-slate-900">Resize with ratio lock</dt>
+                <dd class="mt-1 text-slate-600">Set a width or height and the other side follows, so nothing stretches.</dd>
+              </div>
+              <div>
+                <dt class="font-semibold text-slate-900">One ZIP download</dt>
+                <dd class="mt-1 text-slate-600">Convert dozens of images and get them back as a single archive.</dd>
+              </div>
+            </dl>
+
+            <div class="mt-8 flex gap-3 rounded-2xl border border-slate-200 bg-white p-4">
+              <svg class="mt-0.5 h-5 w-5 shrink-0 text-accent-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m18 16 4-4-4-4"/><path d="m6 8-4 4 4 4"/><path d="m14.5 4-5 16"/></svg>
+              <p class="text-sm leading-relaxed text-slate-600">
+                The codecs (@jsquash) run as WebAssembly inside the page. Your image bytes are read, converted, and zipped without ever being sent to a server.
+              </p>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ HOW IT WORKS ============ -->
+    <section id="how" class="scroll-mt-20 border-t border-slate-200 py-24 sm:py-32">
+      <div class="mx-auto max-w-7xl px-6 lg:px-8">
+        <div class="mx-auto max-w-2xl text-center">
+          <p class="text-sm font-semibold uppercase tracking-wide text-accent-600">How it works</p>
+          <h2 class="mt-3 text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">Three steps, start to finish.</h2>
+          <p class="mt-5 text-lg leading-relaxed text-slate-600">From a page you found to a folder of converted images, without leaving the browser tab.</p>
+        </div>
+
+        <div class="mx-auto mt-16 grid max-w-5xl gap-8 md:grid-cols-3">
+          <!-- step 1 -->
+          <div class="rounded-2xl border border-slate-200 bg-white p-6">
+            <span class="flex h-10 w-10 items-center justify-center rounded-lg bg-accent-600 text-sm font-semibold text-white">1</span>
+            <h3 class="mt-5 text-lg font-semibold text-slate-900">Point it at a page</h3>
+            <p class="mt-2 leading-relaxed text-slate-600">Paste a URL or sitemap to scrape, or skip straight to the converter and drop in your own files.</p>
+          </div>
+          <!-- step 2 -->
+          <div class="rounded-2xl border border-slate-200 bg-white p-6">
+            <span class="flex h-10 w-10 items-center justify-center rounded-lg bg-accent-600 text-sm font-semibold text-white">2</span>
+            <h3 class="mt-5 text-lg font-semibold text-slate-900">Pick your images</h3>
+            <p class="mt-2 leading-relaxed text-slate-600">Filter and sort the results, drop duplicates, and select the images you actually want to keep.</p>
+          </div>
+          <!-- step 3 -->
+          <div class="rounded-2xl border border-slate-200 bg-white p-6">
+            <span class="flex h-10 w-10 items-center justify-center rounded-lg bg-accent-600 text-sm font-semibold text-white">3</span>
+            <h3 class="mt-5 text-lg font-semibold text-slate-900">Convert and download</h3>
+            <p class="mt-2 leading-relaxed text-slate-600">Choose a format and quality, resize if needed, then download the whole batch as one ZIP.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ PRIVACY EXPLAINER ============ -->
+    <section class="border-t border-slate-200 bg-slate-50 py-24 sm:py-32">
+      <div class="mx-auto max-w-7xl px-6 lg:px-8">
+        <div class="mx-auto max-w-2xl text-center">
+          <p class="text-sm font-semibold uppercase tracking-wide text-accent-600">Privacy</p>
+          <h2 class="mt-3 text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">Here is exactly what touches a server, and what does not.</h2>
+          <p class="mt-5 text-lg leading-relaxed text-slate-600">
+            We would rather be precise than make a tidy promise we can't keep. The two halves of the tool work differently, so here is the honest version.
+          </p>
+        </div>
+
+        <div class="mx-auto mt-16 grid max-w-4xl gap-6 md:grid-cols-2">
+          <!-- local -->
+          <div class="rounded-2xl border border-slate-200 bg-white p-6">
+            <div class="flex items-center gap-3">
+              <span class="flex h-10 w-10 items-center justify-center rounded-lg bg-accent-50 text-accent-600" aria-hidden="true">
+                <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/></svg>
+              </span>
+              <h3 class="text-lg font-semibold text-slate-900">Converting stays local</h3>
+            </div>
+            <p class="mt-4 leading-relaxed text-slate-600">
+              When you convert an image, it is read and rewritten inside your browser. The image bytes do not leave your device, and there is no upload step. Close the tab and nothing is left behind on our end, because nothing was ever sent.
+            </p>
+          </div>
+
+          <!-- scraping -->
+          <div class="rounded-2xl border border-slate-200 bg-white p-6">
+            <div class="flex items-center gap-3">
+              <span class="flex h-10 w-10 items-center justify-center rounded-lg bg-accent-50 text-accent-600" aria-hidden="true">
+                <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10Z"/></svg>
+              </span>
+              <h3 class="text-lg font-semibold text-slate-900">Scraping passes through a proxy</h3>
+            </div>
+            <p class="mt-4 leading-relaxed text-slate-600">
+              Scraping is different, and we won't pretend otherwise. The URL you enter and the page and image bytes we fetch travel through our Cloudflare Worker proxy. That is the only way around the browser's cross-origin block. We don't store any of it; the proxy fetches, hands the result back, and forgets it.
+            </p>
+          </div>
+        </div>
+
+        <p class="mx-auto mt-10 max-w-2xl text-center text-sm leading-relaxed text-slate-500">
+          Analytics are privacy-friendly and aggregate only. No ad networks, no third-party trackers, no selling data. You can read the proxy code and the whole app on GitHub.
+        </p>
+      </div>
+    </section>
+
+    <!-- ============ FAQ ============ -->
+    <section id="faq" class="scroll-mt-20 border-t border-slate-200 py-24 sm:py-32">
+      <div class="mx-auto max-w-3xl px-6 lg:px-8">
+        <div class="text-center">
+          <p class="text-sm font-semibold uppercase tracking-wide text-accent-600">FAQ</p>
+          <h2 class="mt-3 text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">Questions, answered plainly.</h2>
+        </div>
+
+        <div class="mt-12 divide-y divide-slate-200 border-y border-slate-200">
+          <!-- Q1 -->
+          <details class="group py-5" open>
+            <summary class="flex cursor-pointer items-center justify-between gap-4 rounded-lg text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-600 focus-visible:ring-offset-2">
+              <span class="text-base font-semibold text-slate-900">Is it really free?</span>
+              <svg class="faq-chevron h-5 w-5 shrink-0 text-slate-400 transition-transform duration-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+            </summary>
+            <p class="mt-3 max-w-prose leading-relaxed text-slate-600">
+              Yes. ScrapeConvert is free and open source under the MIT license. There is no paid tier and no upsell. If it saves you time, there is a buy-me-a-coffee link, but it is optional.
+            </p>
+          </details>
+
+          <!-- Q2 -->
+          <details class="group py-5">
+            <summary class="flex cursor-pointer items-center justify-between gap-4 rounded-lg text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-600 focus-visible:ring-offset-2">
+              <span class="text-base font-semibold text-slate-900">Do you store my images?</span>
+              <svg class="faq-chevron h-5 w-5 shrink-0 text-slate-400 transition-transform duration-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+            </summary>
+            <p class="mt-3 max-w-prose leading-relaxed text-slate-600">
+              Conversion happens in your browser, so those files are never uploaded or saved. Scraping is the exception: the pages and images we fetch for you pass through our proxy to get around browser limits. We don't keep them. The proxy fetches, returns the result, and holds nothing.
+            </p>
+          </details>
+
+          <!-- Q3 -->
+          <details class="group py-5">
+            <summary class="flex cursor-pointer items-center justify-between gap-4 rounded-lg text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-600 focus-visible:ring-offset-2">
+              <span class="text-base font-semibold text-slate-900">Why does scraping need a proxy?</span>
+              <svg class="faq-chevron h-5 w-5 shrink-0 text-slate-400 transition-transform duration-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+            </summary>
+            <p class="mt-3 max-w-prose leading-relaxed text-slate-600">
+              Browsers won't let a script on our page read the contents of another site directly. That rule is called CORS, and it exists for good security reasons. To fetch a page's images, the request has to come from a server instead, so we run a small proxy that does exactly that and nothing more.
+            </p>
+          </details>
+
+          <!-- Q4 -->
+          <details class="group py-5">
+            <summary class="flex cursor-pointer items-center justify-between gap-4 rounded-lg text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-600 focus-visible:ring-offset-2">
+              <span class="text-base font-semibold text-slate-900">Is the scraping respectful?</span>
+              <svg class="faq-chevron h-5 w-5 shrink-0 text-slate-400 transition-transform duration-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+            </summary>
+            <p class="mt-3 max-w-prose leading-relaxed text-slate-600">
+              We try to be a good citizen. The proxy only pulls public images, skips paid stock-photo sites, and refuses private or internal addresses. It is rate-limited, and each session does a one-time bot check so the service isn't abused at scale. Use it for images you have the right to use.
+            </p>
+          </details>
+
+          <!-- Q5 -->
+          <details class="group py-5">
+            <summary class="flex cursor-pointer items-center justify-between gap-4 rounded-lg text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-600 focus-visible:ring-offset-2">
+              <span class="text-base font-semibold text-slate-900">Can I self-host it?</span>
+              <svg class="faq-chevron h-5 w-5 shrink-0 text-slate-400 transition-transform duration-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+            </summary>
+            <p class="mt-3 max-w-prose leading-relaxed text-slate-600">
+              Yes. The app and the proxy worker are built to run on Cloudflare, and the repo includes what you need to deploy your own copy. Run it with your own rate limits and bot check, and you control the whole pipeline.
+            </p>
+          </details>
+
+          <!-- Q6 -->
+          <details class="group py-5">
+            <summary class="flex cursor-pointer items-center justify-between gap-4 rounded-lg text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-600 focus-visible:ring-offset-2">
+              <span class="text-base font-semibold text-slate-900">Is there a browser extension?</span>
+              <svg class="faq-chevron h-5 w-5 shrink-0 text-slate-400 transition-transform duration-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+            </summary>
+            <p class="mt-3 max-w-prose leading-relaxed text-slate-600">
+              There is a free Chrome extension that scrapes the images on whatever tab you are looking at, then drops them into the same converter. It is handy when you are already on the page you want.
+            </p>
+          </details>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ FINAL CTA ============ -->
+    <section class="border-t border-slate-200 bg-slate-50 py-24 sm:py-28">
+      <div class="mx-auto max-w-3xl px-6 text-center lg:px-8">
+        <h2 class="text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">Ready to grab some images?</h2>
+        <p class="mt-4 text-lg leading-relaxed text-slate-600">Open the app in a new tab. No sign-up, nothing to install.</p>
+        <div class="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+          <a href="#" class="inline-flex items-center justify-center gap-2 rounded-lg bg-accent-600 px-6 py-3 text-sm font-semibold text-white shadow-sm transition-colors duration-150 hover:bg-accent-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-600 focus-visible:ring-offset-2">
+            Open ScrapeConvert
+            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          </a>
+          <a href="https://github.com" class="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-6 py-3 text-sm font-semibold text-slate-700 transition-colors duration-150 hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-600 focus-visible:ring-offset-2">
+            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5C5.73.5.5 5.73.5 12.01c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.56 0-.27-.01-1-.02-1.95-3.2.69-3.87-1.54-3.87-1.54-.52-1.33-1.28-1.69-1.28-1.69-1.05-.71.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.28 1.19-3.09-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11 11 0 0 1 5.8 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.12 3.05.74.81 1.18 1.83 1.18 3.09 0 4.42-2.69 5.39-5.25 5.68.41.36.78 1.06.78 2.14 0 1.55-.01 2.8-.01 3.18 0 .31.21.68.8.56A11.52 11.52 0 0 0 23.5 12C23.5 5.73 18.27.5 12 .5Z"/></svg>
+            Star on GitHub
+          </a>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ============ FOOTER ============ -->
+  <footer class="border-t border-slate-200 bg-white">
+    <div class="mx-auto max-w-7xl px-6 py-16 lg:px-8">
+      <div class="grid gap-10 md:grid-cols-2 lg:grid-cols-4">
+        <!-- brand -->
+        <div class="max-w-xs">
+          <div class="flex items-center gap-2">
+            <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-accent-600 text-white" aria-hidden="true">
+              <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h12l-3-3"/><path d="M20 15H8l3 3"/></svg>
+            </span>
+            <span class="text-base font-semibold tracking-tight text-slate-900">ScrapeConvert</span>
+          </div>
+          <p class="mt-4 text-sm leading-relaxed text-slate-600">Scrape images from any site and convert them in your browser. Free and open source.</p>
+        </div>
+
+        <!-- product -->
+        <div>
+          <h3 class="text-sm font-semibold text-slate-900">Product</h3>
+          <ul class="mt-4 space-y-3 text-sm">
+            <li><a href="#scraper" class="rounded-md text-slate-600 transition-colors hover:text-slate-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-600 focus-visible:ring-offset-2">Scraper</a></li>
+            <li><a href="#converter" class="rounded-md text-slate-600 transition-colors hover:text-slate-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-600 focus-visible:ring-offset-2">Converter</a></li>
+            <li><a href="#how" class="rounded-md text-slate-600 transition-colors hover:text-slate-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-600 focus-visible:ring-offset-2">How it works</a></li>
+            <li><a href="#" class="rounded-md text-slate-600 transition-colors hover:text-slate-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-600 focus-visible:ring-offset-2">Chrome extension</a></li>
+          </ul>
+        </div>
+
+        <!-- open source -->
+        <div>
+          <h3 class="text-sm font-semibold text-slate-900">Open source</h3>
+          <ul class="mt-4 space-y-3 text-sm">
+            <li>
+              <a href="https://github.com" class="inline-flex items-center gap-1.5 rounded-md text-slate-600 transition-colors hover:text-slate-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-600 focus-visible:ring-offset-2">
+                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5C5.73.5.5 5.73.5 12.01c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.56 0-.27-.01-1-.02-1.95-3.2.69-3.87-1.54-3.87-1.54-.52-1.33-1.28-1.69-1.28-1.69-1.05-.71.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.28 1.19-3.09-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11 11 0 0 1 5.8 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.12 3.05.74.81 1.18 1.83 1.18 3.09 0 4.42-2.69 5.39-5.25 5.68.41.36.78 1.06.78 2.14 0 1.55-.01 2.8-.01 3.18 0 .31.21.68.8.56A11.52 11.52 0 0 0 23.5 12C23.5 5.73 18.27.5 12 .5Z"/></svg>
+                GitHub
+              </a>
+            </li>
+            <li><a href="#" class="rounded-md text-slate-600 transition-colors hover:text-slate-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-600 focus-visible:ring-offset-2">MIT license</a></li>
+            <li><a href="#" class="rounded-md text-slate-600 transition-colors hover:text-slate-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-600 focus-visible:ring-offset-2">Self-host on Cloudflare</a></li>
+            <li>
+              <a href="#" class="inline-flex items-center gap-1.5 rounded-md text-slate-600 transition-colors hover:text-slate-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-600 focus-visible:ring-offset-2">
+                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4Z"/><path d="M6 1v3M10 1v3M14 1v3"/></svg>
+                Buy me a coffee
+              </a>
+            </li>
+          </ul>
+        </div>
+
+        <!-- legal -->
+        <div>
+          <h3 class="text-sm font-semibold text-slate-900">Legal</h3>
+          <ul class="mt-4 space-y-3 text-sm">
+            <li><a href="#" class="rounded-md text-slate-600 transition-colors hover:text-slate-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-600 focus-visible:ring-offset-2">Privacy</a></li>
+            <li><a href="#" class="rounded-md text-slate-600 transition-colors hover:text-slate-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-600 focus-visible:ring-offset-2">Terms</a></li>
+            <li><a href="#" class="rounded-md text-slate-600 transition-colors hover:text-slate-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-600 focus-visible:ring-offset-2">Acceptable use</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="mt-12 flex flex-col items-center justify-between gap-4 border-t border-slate-200 pt-8 sm:flex-row">
+        <p class="text-sm text-slate-500">© 2024 ScrapeConvert. Made for the open web.</p>
+        <p class="text-sm text-slate-400">No accounts. No ads. Conversion runs locally.</p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- minimal JS: mobile menu toggle only -->
+  <script>
+    (function () {
+      var btn = document.getElementById('menuBtn');
+      var menu = document.getElementById('mobileMenu');
+      if (!btn || !menu) return;
+      btn.addEventListener('click', function () {
+        var open = menu.classList.toggle('hidden') === false;
+        btn.setAttribute('aria-expanded', String(open));
+      });
+      menu.querySelectorAll('a').forEach(function (a) {
+        a.addEventListener('click', function () {
+          menu.classList.add('hidden');
+          btn.setAttribute('aria-expanded', 'false');
+        });
+      });
+    })();
+  </script>
+</body>
+</html>
