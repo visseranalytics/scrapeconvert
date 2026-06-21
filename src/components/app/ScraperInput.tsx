@@ -51,8 +51,8 @@ interface Props {
 
 const MODES: { id: CrawlMode; label: string }[] = [
   { id: 'single', label: 'Single page' },
-  { id: 'multiple', label: 'Multiple URLs' },
-  { id: 'sitemap', label: 'Sitemap crawl' },
+  { id: 'multiple', label: 'Multiple pages' },
+  { id: 'sitemap', label: 'Sitemap' },
 ];
 
 export function ScraperInput({ deps = defaultDeps, initialHasSession, onMint = mintSession, siteKey }: Props) {
@@ -78,7 +78,7 @@ export function ScraperInput({ deps = defaultDeps, initialHasSession, onMint = m
       await onMint(token);
       setHasSession(true);
     } catch {
-      setVerifyError('Verification failed — please try again.');
+      setVerifyError('Verification failed. Please try again.');
     } finally {
       setVerifying(false);
     }
@@ -102,13 +102,13 @@ export function ScraperInput({ deps = defaultDeps, initialHasSession, onMint = m
           action: 'turnstile-spin-v1',
           theme: 'dark',
           callback: (token: string) => void mintRef.current(token),
-          'error-callback': () => setVerifyError('Verification error — refresh and try again.'),
+          'error-callback': () => setVerifyError('Verification ran into an error. Refresh and try again.'),
           'expired-callback': () => {
             if (widgetIdRef.current) ts.reset(widgetIdRef.current);
           },
         });
       })
-      .catch(() => setVerifyError('Could not load the verification widget.'));
+      .catch(() => setVerifyError('Could not load the verification check. Refresh the page and try again.'));
     return () => {
       cancelled = true;
       const ts = typeof window !== 'undefined' ? window.turnstile : undefined;
@@ -139,7 +139,7 @@ export function ScraperInput({ deps = defaultDeps, initialHasSession, onMint = m
       <AppTopBar active="scraper" hasSession={hasSession} />
       <main className="mx-auto max-w-3xl px-6 py-16">
         <p className="font-mono text-xs uppercase tracking-widest text-accent-400">Scraper</p>
-        <h1 className="mt-2 text-3xl font-semibold tracking-tight text-zinc-50">Tell it where to pull images from.</h1>
+        <h1 className="mt-2 text-3xl font-semibold tracking-tight text-zinc-50">Extract images from a page, multiple pages, or a sitemap.</h1>
 
         <div className="mt-8 rounded-2xl border border-white/10 bg-zinc-900/60 p-5">
           <div role="tablist" aria-label="Scrape mode" className="flex gap-1 rounded-lg border border-white/10 bg-zinc-950 p-1">
@@ -217,7 +217,7 @@ export function ScraperInput({ deps = defaultDeps, initialHasSession, onMint = m
                 {verifyError && <span className="font-mono text-xs text-amber-400">{verifyError}</span>}
               </div>
             )}
-            <span className="font-mono text-xs text-zinc-500">Reads &lt;img&gt; tags and CSS background-image. Public images only.</span>
+            <span className="font-mono text-xs text-zinc-500">Finds images in the page, including CSS backgrounds. Public images only.</span>
           </div>
         </div>
 
@@ -249,7 +249,7 @@ export function ScraperInput({ deps = defaultDeps, initialHasSession, onMint = m
             </ul>
             {crawl.images.length > 0 && (
               <a href="/workbench" className="mt-4 inline-flex items-center rounded-lg bg-accent-400 px-4 py-2 text-sm font-medium text-zinc-950">
-                Open Workbench ({crawl.images.length})
+                Open the Workbench ({crawl.images.length})
               </a>
             )}
           </section>

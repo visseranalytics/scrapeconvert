@@ -17,9 +17,9 @@ describe('ScraperInput', () => {
     render(<ScraperInput deps={pageDeps} initialHasSession={true} />);
     // single (default): single URL input
     expect(screen.getByLabelText('Page URL')).toBeTruthy();
-    fireEvent.click(screen.getByRole('tab', { name: 'Multiple URLs' }));
+    fireEvent.click(screen.getByRole('tab', { name: 'Multiple pages' }));
     expect(screen.getByLabelText('URLs, one per line')).toBeTruthy();
-    fireEvent.click(screen.getByRole('tab', { name: 'Sitemap crawl' }));
+    fireEvent.click(screen.getByRole('tab', { name: 'Sitemap' }));
     expect(screen.getByLabelText('Max pages to crawl')).toBeTruthy();
   });
 
@@ -54,11 +54,11 @@ describe('ScraperInput', () => {
     }
   });
 
-  it('runs the crawl and renders the log + counts + Open Workbench', async () => {
+  it('runs the crawl and renders the log + counts + Open the Workbench', async () => {
     render(<ScraperInput deps={pageDeps} initialHasSession={true} />);
     fireEvent.change(screen.getByLabelText('Page URL'), { target: { value: 'https://e.com/' } });
     fireEvent.click(screen.getByRole('button', { name: /Find images/ }));
-    await waitFor(() => expect(screen.getByText(/Open Workbench/)).toBeTruthy());
+    await waitFor(() => expect(screen.getByText(/Open the Workbench/)).toBeTruthy());
     expect(screen.getByText(/1 images · 1 pages/)).toBeTruthy();
     // results persisted for the workbench
     expect(sessionStorage.getItem('sc.workbench')).toContain('a.png');

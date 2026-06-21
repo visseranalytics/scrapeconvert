@@ -13,6 +13,6 @@ const siteKey = (env as Record<string, string>).PUBLIC_TURNSTILE_SITE_KEY ?? '';
 // scripts/styles are left to Astro. Tightened further in Phase 4.
 Astro.response.headers.set('Content-Security-Policy', "img-src 'self' https: data: blob:");
 ---
-<Base title="ScrapeConvert — Scraper" description="Pull images from a page, a list of URLs, or a whole sitemap.">
+<Base title="ScrapeConvert - Scraper" description="Extract images from a page, multiple pages, or a sitemap.">
   <ScraperInput client:only="react" siteKey={siteKey} />
 </Base>

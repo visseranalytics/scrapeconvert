@@ -1,7 +1,7 @@
 {
   "name": "ScrapeConvert",
   "short_name": "ScrapeConvert",
-  "description": "Extract images from any website and convert them to modern formats. 100% client-side processing.",
+  "description": "Extract images from most public websites and convert them in your browser. Nothing is uploaded.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0f172a",
