@@ -17,6 +17,9 @@ export default defineConfig({
   integrations: [react()],
   vite: {
     plugins: [tailwindcss()],
+    // @jsquash codec packages ship web-worker entries; emit them as ES modules
+    // so Rollup can code-split them (the default iife is not splittable).
+    worker: { format: 'es' },
   },
   site: 'https://scrapeconvert.com',
 });

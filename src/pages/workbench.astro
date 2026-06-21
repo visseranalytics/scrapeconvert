@@ -1,0 +1,11 @@
+---
+import Base from '../layouts/Base.astro';
+import { Workbench } from '../components/app/Workbench';
+
+export const prerender = false;
+
+Astro.response.headers.set('Content-Security-Policy', "img-src 'self' https: data: blob:");
+---
+<Base title="ScrapeConvert — Workbench" description="Convert and download the images you picked.">
+  <Workbench client:only="react" />
+</Base>

@@ -1,0 +1,13 @@
+---
+import Base from '../layouts/Base.astro';
+import { ScraperInput } from '../components/app/ScraperInput';
+
+export const prerender = false;
+
+// Restrict where images can load from (the grid renders cross-origin thumbnails);
+// scripts/styles are left to Astro. Tightened further in Phase 4.
+Astro.response.headers.set('Content-Security-Policy', "img-src 'self' https: data: blob:");
+---
+<Base title="ScrapeConvert — Scraper" description="Pull images from a page, a list of URLs, or a whole sitemap.">
+  <ScraperInput client:only="react" />
+</Base>
